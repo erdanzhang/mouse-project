@@ -1,0 +1,31 @@
+# Secrets — NEVER commit
+.cred
+*.key
+*.pem
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data / models / outputs (kept out of git — large / not source)
+data/
+outputs/
+*.mp4
+*.avi
+*.mkv
+*.pt
+*.onnx
+!tests/**/*.mp4          # allow tiny fixtures if ever committed
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

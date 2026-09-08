@@ -1,0 +1,34 @@
+# ─── Secrets — NEVER commit (this is a PUBLIC repo) ───
+.cred
+*.key
+*.pem
+.env
+*.env
+
+# ─── Python ───
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ─── Large / generated assets (not source) ───
+data/
+outputs/
+weights/
+*.mp4
+*.avi
+*.mkv
+*.pt
+*.onnx
+*.pth
+
+# ─── OS / editor ───
+.DS_Store
+.idea/
+.vscode/

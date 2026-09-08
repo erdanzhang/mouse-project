@@ -1,0 +1,15 @@
+# Secrets — NEVER commit
+.cred
+*.key
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Models / outputs
+*.pt
+outputs/
+/tmp/
+
+.DS_Store

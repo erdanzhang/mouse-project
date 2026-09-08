@@ -1,0 +1,6 @@
+# Pose / tracking / behavior models (heavy — install when you reach M6).
+# torch picks CUDA on the RTX 5070 PC, MPS on Apple Silicon, else CPU.
+torch>=2.1
+ultralytics>=8.3          # NOTE: AGPL-3.0 — fine for this personal project
+supervision>=0.22         # MIT — ByteTrack + annotators
+# SLEAP / DeepLabCut / Anipose are installed via their own environments; see docs.

@@ -1,0 +1,9 @@
+# Base install — runs on macOS, Windows, or Linux (no GPU or camera needed).
+# Enough for `mouse-rig report` (M0) and `mouse-rig gate` (M1).
+numpy>=1.23
+opencv-python>=4.7
+pyyaml>=6.0
+
+# Optional extras (install only where needed):
+#   pip install -r requirements-capture.txt   # real cameras (Win/Linux + MVS)
+#   pip install -r requirements-models.txt    # pose / behavior models

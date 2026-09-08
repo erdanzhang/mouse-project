@@ -1,0 +1,8 @@
+# Core CV / tracking
+ultralytics>=8.3.0      # YOLO-World open-vocabulary detector
+supervision>=0.22.0    # ByteTrack tracker + annotators
+opencv-python>=4.9.0
+numpy>=1.26.0
+
+# LLM scratch confirmation (Claude vision)
+anthropic>=0.40.0

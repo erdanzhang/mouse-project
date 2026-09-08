@@ -1,0 +1,4 @@
+# Real machine-vision camera capture (GenICam / USB3 Vision).
+# Needs a GenTL producer (.cti) — install Hikvision MVS and set GENICAM_GENTL64_PATH.
+# Practically Windows/Linux; not used for Mac development (use file/webcam sources).
+harvesters>=1.4
