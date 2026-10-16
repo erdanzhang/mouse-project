@@ -25,7 +25,8 @@ def add_parsers(sub):
 
     p = sub.add_parser("record", help="record without the web UI (for tests and scripts)")
     _common(p)
-    p.add_argument("--seconds", type=float, required=True, help="how long to record")
+    p.add_argument("--seconds", type=float, required=True,
+                   help="how long to record (exact: 300 with 60-s clips gives five full clips)")
     p.add_argument("--clip-seconds", type=float, help="override recording.clip_seconds")
     p.add_argument("--output", help="recordings folder (overrides recording.output_dir)")
     p.set_defaults(func=run_record)
@@ -71,6 +72,9 @@ def run_cameras(args) -> int:
 def run_record(args) -> int:
     from ..recorder.manager import CameraManager
     from ..recorder.session import RecordingSession
+    if args.seconds <= 0:
+        print("--seconds must be more than 0")
+        return 2
     cfg = _load(args)
     if args.clip_seconds:
         cfg["recording"]["clip_seconds"] = args.clip_seconds
@@ -82,14 +86,17 @@ def run_record(args) -> int:
             time.sleep(0.2)
         for cam in mgr.status():
             print(f"{cam['id']}: {cam['state']} {cam['serial']} {cam['error']}")
-        session = RecordingSession(cfg, mgr)
+        # a timed session stops by itself after exactly --seconds (whole clips when it is a multiple)
+        session = RecordingSession(cfg, mgr, minutes=args.seconds / 60)
         path = session.start()
         print(f"recording to {path} with {session.encoder} for {args.seconds:g} s ...")
         try:
-            time.sleep(args.seconds)
+            while session.state != "stopped":
+                time.sleep(0.2)
         except KeyboardInterrupt:
-            pass
-        session.stop()
+            session.stop()
+            while session.state != "stopped":
+                time.sleep(0.2)
         st = session.status()
         for cam_id, w in st["writers"].items():
             print(f"{cam_id}: {w['frames_written']} frames, {w['clips']} clips, "
@@ -144,18 +151,21 @@ def run_check(args) -> int:
             print(f"{cam_id:<8}: serial {c.get('serial')}  {c.get('width')}x{c.get('height')}  "
                   f"measured {c.get('measured_fps')} fps  dropped(queue) {c.get('frames_dropped')}  "
                   f"lost(camera) {c.get('camera_lost_frames')}  filled {c.get('frames_filled', 0)}")
+    free_run = (meta.get("sync") or {}).get("mode") == "free-run"
     print()
     print("clip".ljust(26) + "".join(c.ljust(12) for c in cams) + "same?")
     problems = 0
     for clip in sorted(p for p in session.iterdir() if p.is_dir() and p.name.startswith("clip-")):
-        counts = []
+        counts, cells, decode_ok = [], [], True
         for cam_id in cams:
             csv_path = clip / f"{cam_id}.frames.csv"
             if not csv_path.exists():
                 counts.append(None)
+                cells.append("missing")
                 continue
             with open(csv_path, newline="", encoding="utf-8") as fh:
                 n = max(0, sum(1 for _ in csv.reader(fh)) - 1)
+            cell = str(n)
             if args.decode:
                 import cv2
                 video = next(clip.glob(f"{cam_id}.mp4"), None) or next(clip.glob(f"{cam_id}.mkv"), None)
@@ -163,14 +173,26 @@ def run_check(args) -> int:
                 v = 0
                 while cap is not None and cap.read()[0]:
                     v += 1
-                n = f"{n}/{v}"
+                cell = f"{n}/{v}"
+                decode_ok = decode_ok and v == n          # one CSV row per video frame
             counts.append(n)
-        ok = None not in counts and len({str(c) for c in counts}) <= 1
-        problems += 0 if ok else 1
-        print(clip.name.ljust(26) + "".join(str("missing" if c is None else c).ljust(12) for c in counts)
-              + ("yes" if ok else "NO"))
+            cells.append(cell)
+        present = [c for c in counts if c is not None]
+        spread = max(present) - min(present) if present else 0
+        if None in counts or not decode_ok:
+            verdict = "NO"
+        elif spread == 0:
+            verdict = "yes"
+        elif free_run and spread <= 2:
+            verdict = f"yes (free-run, {spread} apart)"
+        else:
+            verdict = "NO"
+        problems += verdict == "NO"
+        print(clip.name.ljust(26) + "".join(c.ljust(12) for c in cells) + verdict)
     print("\nFull clips should hold clip_seconds x fps frames (60 s x 60 fps = 3600)."
           "\nTrigger mode (line0): every camera must show the same count in every clip;"
           "\n  'filled' = frames the camera lost, replaced by a copy of the previous frame."
-          "\nFree-run mode: a difference of 1-2 frames between cameras is normal.")
+          "\nFree-run mode: a difference of 1-2 frames between cameras is normal."
+          + ("\n--decode: the second number (frames in the video) must equal the first (rows in the CSV)."
+             if args.decode else ""))
     return 0 if problems == 0 else 2

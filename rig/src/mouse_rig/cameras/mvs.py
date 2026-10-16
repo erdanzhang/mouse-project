@@ -216,7 +216,7 @@ class MvsCamera(Camera):
         self._set_enum("GainAuto", "Off")
         self._set_float("ExposureTime", s.exposure_us)
         self._set_float("Gain", s.gain_db)
-        self._set_enum("TriggerSelector", "FrameStart")
+        self._select_frame_trigger()
         if s.trigger == "line0":
             self._set_bool("AcquisitionFrameRateEnable", False)
             self._set_enum("TriggerMode", "On")
@@ -228,6 +228,26 @@ class MvsCamera(Camera):
             self._set_float("AcquisitionFrameRate", s.fps)
         if hasattr(self._cam, "MV_CC_SetImageNodeNum"):
             self._cam.MV_CC_SetImageNodeNum(16)
+
+    def _select_frame_trigger(self) -> None:
+        """Make one trigger pulse start one frame.
+
+        Most models call this selector "FrameStart". The Hikrobot CS series (e.g.
+        MV-CS016-10UC) only has "FrameBurstStart", which is the same thing with a
+        burst of 1 frame.
+        """
+        cam = self._cam
+        if cam.MV_CC_SetEnumValueByString("TriggerSelector", "FrameStart") == MV_OK:
+            return
+        if cam.MV_CC_SetEnumValueByString("TriggerSelector", "FrameBurstStart") != MV_OK:
+            self.warnings.append("could not set TriggerSelector to FrameStart or FrameBurstStart; "
+                                 "using the camera default")
+            return
+        if cam.MV_CC_SetIntValueEx("AcquisitionBurstFrameCount", 1) != MV_OK:
+            value = self._sdk.MVCC_INTVALUE_EX()
+            if cam.MV_CC_GetIntValueEx("AcquisitionBurstFrameCount", value) == MV_OK and value.nCurValue != 1:
+                self.warnings.append(f"AcquisitionBurstFrameCount is {value.nCurValue}, not 1: "
+                                     "each trigger pulse makes several frames")
 
     # -- Camera interface ------------------------------------------------------
     def start(self) -> None:

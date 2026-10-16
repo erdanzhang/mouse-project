@@ -81,3 +81,28 @@ def test_settings_and_errors(server):
     with pytest.raises(urllib.error.HTTPError) as err:
         _post(base + "/api/record/stop")
     assert err.value.code == 409
+
+
+def test_timed_start_and_bad_length(server):
+    base, _ = server
+    with pytest.raises(urllib.error.HTTPError) as err:
+        _post(base + "/api/record/start", {"minutes": -2})
+    assert err.value.code == 400
+    started = _post(base + "/api/record/start", {"minutes": 2 / 60})    # 2 one-second clips
+    assert started["state"] == "recording" and started["limit_s"] == 2
+    deadline = time.time() + 15
+    while time.time() < deadline:
+        rec = json.loads(_get(base + "/api/status")[2])["recording"]
+        if rec["state"] == "stopped":
+            break
+        time.sleep(0.2)
+    assert rec["state"] == "stopped" and rec["limit_reached"]
+
+
+def test_free_space_is_for_the_output_drive(tmp_path):
+    import shutil
+    from mouse_rig.server import RecorderApp
+    cfg = load_config(demo=True)
+    cfg["recording"]["output_dir"] = str(tmp_path / "not" / "made" / "yet")
+    st = RecorderApp(cfg).status()                    # no startup(): cameras stay closed
+    assert abs(st["app"]["free_gb"] - shutil.disk_usage(tmp_path).free / 1e9) < 1.0

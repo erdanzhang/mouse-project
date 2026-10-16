@@ -8,7 +8,8 @@ API
   GET  /api/status                    cameras, recording state, disk, encoder
   GET  /api/sessions                  recent recordings
   GET  /api/preview/<cam-id>.jpg      latest frame of one camera (JPEG)
-  POST /api/record/start              start a recording session
+  POST /api/record/start              start a recording session; JSON {"minutes": 5} stops it
+                                      by itself after exactly 5 minutes (0 = until stopped)
   POST /api/record/stop               stop the recording session
   POST /api/cameras/reconnect         close and re-open all cameras (not while recording)
   POST /api/cameras/<cam-id>/settings JSON {"exposure_us": 3000, "gain_db": 6}
@@ -69,11 +70,11 @@ class RecorderApp:
     def recording(self) -> bool:
         return self.session is not None and self.session.state in ("recording", "stopping")
 
-    def start_recording(self) -> dict:
+    def start_recording(self, minutes: float | None = None) -> dict:
         with self.lock:
             if self.recording():
                 raise RuntimeError("a recording is already running")
-            session = RecordingSession(self.cfg, self.manager)
+            session = RecordingSession(self.cfg, self.manager, minutes=minutes)
             session.start()
             self.session = session
             return session.status()
@@ -105,7 +106,11 @@ class RecorderApp:
     # -- reporting -------------------------------------------------------------
     def status(self) -> dict:
         root = output_dir(self.cfg)
-        probe = root if root.exists() else Path.home()
+        probe = root
+        while not probe.exists() and probe.parent != probe:   # the folder is made at the first recording:
+            probe = probe.parent                              # report the drive it will be on
+        if not probe.exists():
+            probe = Path.home()
         rec = self.cfg["recording"]
         return {
             "app": {
@@ -123,6 +128,7 @@ class RecorderApp:
                 "codec": rec["codec"],
                 "quality": rec["quality"],
                 "min_free_gb": rec["min_free_gb"],
+                "max_minutes": rec.get("max_minutes") or 0,
                 "backends": self.cfg["cameras"]["backends"],
                 "discovery_errors": self.manager.discovery_errors,
                 "sync": self.manager.sync_status(),
@@ -216,7 +222,7 @@ def make_handler(app: RecorderApp):
                 return
             try:
                 if path == "/api/record/start":
-                    self._json(app.start_recording())
+                    self._json(app.start_recording(body.get("minutes")))
                 elif path == "/api/record/stop":
                     self._json(app.stop_recording())
                 elif path == "/api/cameras/reconnect":
@@ -231,6 +237,8 @@ def make_handler(app: RecorderApp):
                     self._error("not found", HTTPStatus.NOT_FOUND)
             except RuntimeError as exc:
                 self._error(str(exc), HTTPStatus.CONFLICT)
+            except ValueError as exc:
+                self._error(str(exc), HTTPStatus.BAD_REQUEST)
             except Exception as exc:
                 self._error(f"{type(exc).__name__}: {exc}", HTTPStatus.INTERNAL_SERVER_ERROR)
 

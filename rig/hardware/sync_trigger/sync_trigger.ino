@@ -4,9 +4,11 @@
 // The cameras must be in trigger mode (recorder.yaml: trigger: "line0").
 //
 // Wiring (Hikrobot 6-pin IO cable MV-ACC-01-2101; check the colours on your cable):
-//   D9  -> cam-1 Line0+ (pin 2, yellow)      D10 -> cam-2 Line0+ (pin 2, yellow)
-//   D11 -> cam-3 Line0+ (pin 2, yellow)      D12 -> cam-4 Line0+ (pin 2, yellow)
+//   D9  -> 470 ohm -> cam-1 Line0+ (pin 2, yellow)   D10 -> 470 ohm -> cam-2 Line0+
+//   D11 -> 470 ohm -> cam-3 Line0+ (pin 2, yellow)   D12 -> 470 ohm -> cam-4 Line0+
 //   GND -> Line0- (pin 5, green) of EVERY camera
+// The series resistor (470 ohm - 1 kohm) limits the opto-coupler current; tested with
+// 470 ohm on 2x MV-CS016-10UC at 60 fps.
 // Each camera has its own output pin, so no pin drives more than one camera.
 // D9..D12 are bits PB1..PB4 of PORTB: one register write switches all four
 // together (skew < 1 microsecond). The on-board LED (D13) toggles once per second.

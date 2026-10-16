@@ -216,7 +216,7 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
 <section id="overview">
 <h2><span class="n">0</span>总览和顺序</h2>
 <p>系统由 2–4 台海康机器人（Hikrobot）USB3 工业相机、1 块 Arduino UNO 和 1 台录制电脑组成。Arduino 给所有相机同时发出触发脉冲，所以每台相机在同一时刻拍下一帧。</p>
-<p>录制服务是一个 Python 程序。启动后，它在浏览器中打开一个网页。在网页上点击“开始录制”，录像自动按 1 分钟切成片段，保存为 H.264 MP4 文件。</p>
+<p>录制服务是一个 Python 程序。启动后，它在浏览器中打开一个网页。在网页上点击“开始录制”，录像自动按 1 分钟切成片段，保存为 H.264 MP4 文件。也可以在“定时”一格填录制分钟数：到时间自动停止，正好得到完整的片段（例如 5 分钟 = 5 个 1 分钟片段）。</p>
 
 <h3>第一次安装的顺序</h3>
 <p>请按下面的顺序做。每一步都有链接，指向详细说明。总时间约 3–4 小时（不含买东西的时间）。</p>
@@ -252,6 +252,7 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
 <tr><td>I/O 线</td><td><code>MV-ACC-01-2101</code>（6 针 I/O 线，一端是相机插头，一端是散线）</td><td class="num">4</td><td>每台相机 1 根，用于触发</td></tr>
 <tr><td>Arduino</td><td>Arduino UNO R3（或兼容板）+ USB A–B 线</td><td class="num">1</td><td>由电脑 USB 供电</td></tr>
 <tr><td>接线材料</td><td>杜邦线（公头）、小面包板或接线端子（如 Wago 221）、电工胶带或热缩管</td><td class="num">1 套</td><td>用于把 4 根绿线合到一个 GND</td></tr>
+<tr><td>电阻</td><td>470 Ω，1/4 W（470 Ω–1 kΩ 都可以）</td><td class="num">4</td><td>每根黄线串 1 个，限制触发电流（见 <a href="#wiring">第 4 节</a>）</td></tr>
 <tr><td>红外灯</td><td>940 nm“无红暴”红外补光灯，DC 12 V，常亮</td><td class="num">2</td><td>每个录制位 2 个；配 12 V 电源适配器</td></tr>
 <tr><td>柔光材料</td><td>柔光纸或磨砂亚克力板</td><td class="num">2</td><td>放在红外灯前面，减少亮斑</td></tr>
 <tr><td>三脚架</td><td>带横臂的三脚架 + 1/4 英寸螺丝</td><td class="num">4</td><td>相机从正上方向下拍</td></tr>
@@ -435,7 +436,7 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
 <!-- 4 ─────────────────────────────────────────── -->
 <section id="wiring">
 <h2><span class="n">4</span>触发接线（Arduino → 相机）</h2>
-<p>每台相机用 1 根 6 针 I/O 线。每根线只用 2 根芯：<strong>黄线</strong>（Line0+，触发输入）接 Arduino 的 D9–D12，<strong>绿线</strong>（Line0−，输入地）接 Arduino 的 GND。其余的线都不接。</p>
+<p>每台相机用 1 根 6 针 I/O 线。每根线只用 2 根芯：<strong>黄线</strong>（Line0+，触发输入）串一个 470 Ω 电阻后接 Arduino 的 D9–D12，<strong>绿线</strong>（Line0−，输入地）接 Arduino 的 GND。其余的线都不接。</p>
 
 <div class="callout danger"><span class="t">警告：先确认线的颜色</span>
 <p>下表的颜色来自 MV-ACC-01-2101 的常见版本。不同批次的线颜色可能不同。接线前，请对照线缆标签或相机说明书（“I/O 接口定义”一节），并用万用表通断档确认：哪根线通到插头的第 2 针，哪根通到第 5 针。</p>
@@ -445,7 +446,7 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
 <thead><tr><th class="num">针</th><th>信号</th><th>线色（以说明书为准）</th><th>接到</th></tr></thead>
 <tbody>
 <tr><td class="num">1</td><td>相机电源输入（DC）</td><td>橙</td><td><strong>不接</strong>，剪短并单独绝缘</td></tr>
-<tr><td class="num">2</td><td>Line0+（光耦隔离输入）</td><td>黄</td><td>Arduino D9 / D10 / D11 / D12（每台相机 1 个脚）</td></tr>
+<tr><td class="num">2</td><td>Line0+（光耦隔离输入）</td><td>黄</td><td>串 470 Ω 电阻 → Arduino D9 / D10 / D11 / D12（每台相机 1 个脚）</td></tr>
 <tr><td class="num">3</td><td>Line2（可配置 I/O）</td><td>以说明书为准</td><td>不接，单独绝缘</td></tr>
 <tr><td class="num">4</td><td>Line1+（光耦隔离输出）</td><td>以说明书为准</td><td>不接，单独绝缘</td></tr>
 <tr><td class="num">5</td><td>Line0− / Line1−（光耦地）</td><td>绿</td><td>Arduino GND（4 台相机的绿线合在一起）</td></tr>
@@ -454,12 +455,17 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
 
 <figure>
 <div class="svgwrap">
-<svg viewBox="0 0 800 470" role="img" aria-label="触发接线图：4 根相机 I/O 线的黄线分别接 Arduino D9、D10、D11、D12，绿线合在一起接 GND，橙线不接">
+<svg viewBox="0 0 800 470" role="img" aria-label="触发接线图：4 根相机 I/O 线的黄线各串一个 470 欧电阻，分别接 Arduino D9、D10、D11、D12，绿线合在一起接 GND，橙线不接">
   <!-- yellow wires -->
   <path class="w-y" d="M200 48 H470 V250 H555"/>
   <path class="w-y" d="M200 143 H450 V270 H555"/>
   <path class="w-y" d="M200 238 H430 V290 H555"/>
   <path class="w-y" d="M200 333 H410 V310 H555"/>
+  <!-- 470 ohm series resistor on every yellow wire -->
+  <rect class="s-box2" x="292" y="42" width="36" height="12" rx="2"/><text class="s-m" x="292" y="36">470 Ω</text>
+  <rect class="s-box2" x="292" y="137" width="36" height="12" rx="2"/><text class="s-m" x="292" y="131">470 Ω</text>
+  <rect class="s-box2" x="292" y="232" width="36" height="12" rx="2"/><text class="s-m" x="292" y="226">470 Ω</text>
+  <rect class="s-box2" x="292" y="327" width="36" height="12" rx="2"/><text class="s-m" x="292" y="321">470 Ω</text>
   <!-- green wires + bus -->
   <path class="w-g" d="M200 82 H360"/><path class="w-g" d="M200 177 H360"/><path class="w-g" d="M200 272 H360"/><path class="w-g" d="M200 367 H360"/>
   <path class="w-g" d="M360 82 V367"/><path class="w-g" d="M360 350 H555"/>
@@ -508,7 +514,7 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
   <rect class="s-box2" x="566" y="436" width="44" height="22" rx="3"/><text class="s-m" x="618" y="452">USB → 电脑</text>
 </svg>
 </div>
-<figcaption>图 3　触发接线。Arduino 板转了 90° 画，数字口（D0–D13、GND）在左侧；实物上这排插针在板子的长边上，GND 紧挨着 13 号脚。D9–D12 由程序同时输出，哪台相机接哪个脚不影响同步；建议 cam-1 接 D9、cam-2 接 D10……，方便排查。</figcaption>
+<figcaption>图 3　触发接线。每根黄线串 1 个 470 Ω 电阻。Arduino 板转了 90° 画，数字口（D0–D13、GND）在左侧；实物上这排插针在板子的长边上，GND 紧挨着 13 号脚。D9–D12 由程序同时输出，哪台相机接哪个脚不影响同步；建议 cam-1 接 D9、cam-2 接 D10……，方便排查。</figcaption>
 </figure>
 
 <h3>接线步骤</h3>
@@ -516,15 +522,16 @@ footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);fon
 <ol class="steps">
   <li>对每根 I/O 线，用万用表确认第 2 针和第 5 针对应的线色。</li>
   <li>把橙线（第 1 针）和其余不用的线剪短，每根单独包好电工胶带或热缩管，互相不能碰到。</li>
-  <li>把 cam-1 的黄线接到 Arduino 的 D9。用杜邦线或接线端子，保证接触牢固。</li>
-  <li>同样，把 cam-2 的黄线接 D10，cam-3 接 D11，cam-4 接 D12。</li>
+  <li>把 cam-1 的黄线串一个 470 Ω 电阻，接到 Arduino 的 D9。用杜邦线或接线端子，保证接触牢固。</li>
+  <li>同样，把 cam-2 的黄线（串电阻）接 D10，cam-3 接 D11，cam-4 接 D12。</li>
   <li>把所有相机的绿线接到同一个面包板横排或接线端子上。</li>
   <li>用 1 根杜邦线，把这个横排连到 Arduino 的 GND（13 号脚旁边那个）。</li>
   <li>把每根 I/O 线的 6 针插头插到相机背面的 I/O 口，对准缺口，拧紧锁紧环。</li>
   <li>用胶带把 Arduino 和接线固定好，防止被拉扯。</li>
 </ol>
 <div class="callout"><span class="t">电气说明</span>
-<p>Arduino 输出 5 V 脉冲，宽 1 ms。相机的 Line0 是光耦隔离输入，可以直接接 5 V 信号，不需要外加电阻。每个 Arduino 引脚只接 1 台相机。</p></div>
+<p>Arduino 输出 5 V 脉冲，宽 1 ms。相机的 Line0 是光耦隔离输入，接受 5 V 信号。每根黄线串一个 470 Ω–1 kΩ 电阻，限制光耦的电流，也保护 Arduino 的引脚。实测：2 台 MV-CS016-10UC，各串 470 Ω，60 fps 触发没有漏帧（2026-10-16）。</p>
+<p>每个 Arduino 引脚最好只接 1 台相机。如果 2 台相机接同一个引脚，每台都要有自己的电阻。</p></div>
 </section>
 
 <!-- 5 ─────────────────────────────────────────── -->
@@ -553,7 +560,7 @@ powercfg /SETACTIVE SCHEME_CURRENT</pre></div>
 
 <h3>5.3 硬盘和系统更新</h3>
 <ul>
-  <li>把录像保存到 SSD 上，例如 <span class="path">D:\MouseRecordings</span>。每台相机每小时的数据量估计约 1–4 GB（见 <a href="#files">第 10 节</a>，以实测为准）。</li>
+  <li>把录像保存到 SSD 上，例如 <span class="path">D:\MouseRecordings</span>。每台相机每小时约 5–9 GB（实测，见 <a href="#files">第 10 节</a>）。按每台相机每小时 10 GB 准备磁盘空间。</li>
   <li>在“设置”→“Windows 更新”中设置“使用时段”，或在实验期间暂停更新，防止系统在录制时自动重启。</li>
 </ul>
 </section>
@@ -581,7 +588,7 @@ git clone https://github.com/erdanzhang/mouse-project.git</pre></div>
 <h3 id="sw-mvs">6.4 海康机器人 MVS（相机驱动和 SDK）</h3>
 <ol class="steps">
   <li>打开海康机器人下载中心：<a href="https://www.hikrobotics.com/cn/machinevision/service/download/?module=0">hikrobotics.com → 服务支持 → 下载中心 → 机器视觉</a>。</li>
-  <li>下载 “MVS 客户端” 的 Windows 版本（V4.x）。</li>
+  <li>下载 “MVS 客户端” 的 Windows 版本（V4.x 或更新；V5.0.2 已实测可用）。</li>
   <li>运行安装程序。<strong>安装路径用默认值</strong>（<span class="path">C:\Program Files (x86)\MVS</span>）。录制服务在这个位置自动找到 MVS 的 Python 接口。</li>
   <li>在驱动选项中，保持 <strong>USB3 Vision 驱动</strong>为勾选。</li>
   <li>安装完成后，<strong>重新启动电脑</strong>。</li>
@@ -681,8 +688,10 @@ git pull</pre></div>
 <div class="tablewrap"><table>
 <thead><tr><th>网页上的项目</th><th>含义</th></tr></thead>
 <tbody>
+<tr><td>定时 … 分钟</td><td>录制时长。填 5 时，录制 5 分钟后自动停止，正好得到 5 个完整的 1 分钟片段（60 fps 时每个 3600 帧）。空或 0 = 不定时，点“停止录制”才停。默认值来自配置 <code>max_minutes</code>。</td></tr>
 <tr><td>开始录制 / 停止录制</td><td>开始或停止一次录制。停止时，当前片段被完整保存。</td></tr>
 <tr><td>重新连接相机</td><td>插拔相机或修改接线后点这个按钮。录制中不能用。</td></tr>
+<tr><td>录制时长</td><td>已录的时间。定时录制时显示“已录 / 设定”，例如 <code>00:02:31 / 00:05:00</code>。</td></tr>
 <tr><td>当前片段</td><td>正在写入的 1 分钟片段的文件夹名。</td></tr>
 <tr><td>编码器</td><td>正在用的视频编码器（libx264 = CPU，h264_nvenc = NVIDIA 显卡）。</td></tr>
 <tr><td>同步</td><td>“自由运行”= 相机各自拍摄，不同步；“Arduino COM3 · 60 fps”= 硬件触发，已通过 USB 找到 Arduino。</td></tr>
@@ -752,7 +761,7 @@ cameras:
   <li>确认每台相机的状态是“正常”，帧率一格显示“… / 触发”，实测帧率约 60。</li>
   <li>测试触发：拔掉 Arduino 的 USB 线。所有相机的画面应该停住，几秒后显示“等待画面”。</li>
   <li>插回 Arduino 的 USB 线，点“重新连接相机”。画面应该恢复。</li>
-  <li>录制 3 分钟，然后检查（见 8.6）。</li>
+  <li>在“定时”一格填 <code>3</code>，点“开始录制”。3 分钟后录制自动停止，网页显示“定时录制完成”。然后检查（见 8.6）：正好 3 个片段，每个 3600 帧。</li>
 </ol>
 <p class="small muted">第 6 步说明相机确实由 Arduino 触发。如果拔掉 Arduino 后画面还在动，说明相机还在自由运行，检查 <code>trigger</code> 的值和接线。</p>
 
@@ -774,9 +783,10 @@ clip-2026-10-20-143005    3600        3600        yes
 clip-2026-10-20-143105    3600        3600        yes
 clip-2026-10-20-143205    1214        1214        yes</pre></div>
 <ul>
-  <li>完整的片段应该有 60 秒 × 60 fps = 3600 帧。最后一个片段较短，是正常的。</li>
+  <li>完整的片段应该有 60 秒 × 60 fps = 3600 帧。手动停止时，最后一个片段较短，是正常的；定时录制没有这个短片段。</li>
   <li>触发模式：每个片段中所有相机的帧数必须相同。</li>
-  <li>自由运行模式：相机之间差 1–2 帧是正常的。</li>
+  <li>自由运行模式：相机之间差 1–2 帧是正常的，最后一列显示 <code>yes (free-run, 1 apart)</code>。</li>
+  <li><code>--decode</code> 时每格是“CSV 行数/视频帧数”，两个数必须相同。</li>
   <li><code>dropped</code>、<code>lost</code>、<code>filled</code> 应该是 0。不是 0 时，见 <a href="#faq">常见问题</a>。</li>
 </ul>
 </section>
@@ -789,8 +799,8 @@ clip-2026-10-20-143205    1214        1214        yes</pre></div>
   <li>确认 Arduino 的 L 灯在闪（触发模式）。</li>
   <li>双击 <code>start_recorder_windows.bat</code>。</li>
   <li>在网页上检查每台相机的画面、帧率和“同步”一格。</li>
-  <li>放入小鼠，点“开始录制”。</li>
-  <li>实验结束时，点“停止录制”。</li>
+  <li>放入小鼠。在“定时”一格填实验时长（分钟，例如 <code>15</code>），点“开始录制”。到时间录制自动停止，正好得到 15 个 1 分钟片段。</li>
+  <li>不定时（“定时”一格为空）时，实验结束点“停止录制”。</li>
   <li>运行 <code>mouse-rig check</code>，确认全部是 <code>yes</code>。</li>
   <li>把录像文件夹复制到备份硬盘。</li>
 </ol>
@@ -821,7 +831,7 @@ clip-2026-10-20-143205    1214        1214        yes</pre></div>
   <li>黑白相机的视频也是普通的 H.264，任何播放器都能打开。推荐用 VLC 播放。</li>
   <li>文件大小由配置中的 <code>quality</code> 决定（<code>high</code> / <code>balanced</code> / <code>small</code>）。</li>
 </ul>
-<p><strong>数据量估计：</strong>每台相机每小时约 1–4 GB（<code>balanced</code>，1440×1080，60 fps）。这是估计值，和画面噪声、增益有关。第一次实测后，用 session.json 中的 <code>size_mb</code> 计算真实值。</p>
+<p><strong>数据量（实测 2026-10-16）：</strong>彩色相机，1440×1080，60 fps，增益 16 dB，<code>balanced</code>：两次 5 分钟录制中，每台相机每分钟约 90–155 MB，即每小时约 5–9 GB（画面越亮、噪点越多，文件越大）。噪声越大（增益越高）文件越大；红外灯充足、增益低时会更小。用 session.json 中的 <code>size_mb</code> 计算你自己的数值。</p>
 
 <h3>frames.csv（每帧一行）</h3>
 <div class="tablewrap"><table>
@@ -854,7 +864,7 @@ clip-2026-10-20-143205    1214        1214        yes</pre></div>
 <tr><td><code>recording.encoder</code></td><td><code>auto</code></td><td>自动选择：NVIDIA → <code>h264_nvenc</code>，Mac → <code>h264_videotoolbox</code>，否则 <code>libx264</code></td></tr>
 <tr><td><code>recording.x264_preset</code></td><td><code>veryfast</code></td><td>只对 CPU 编码有效。CPU 跟不上时改成 <code>superfast</code></td></tr>
 <tr><td><code>recording.min_free_gb</code></td><td><code>10</code></td><td>磁盘剩余空间低于这个值（GB）时自动停止录制</td></tr>
-<tr><td><code>recording.max_minutes</code></td><td><code>0</code></td><td>单次录制最长分钟数；0 = 不限制</td></tr>
+<tr><td><code>recording.max_minutes</code></td><td><code>0</code></td><td>网页“定时”一格的默认分钟数：到时间自动停止，正好切成完整的片段；0 = 不定时</td></tr>
 <tr><td><code>cameras.backends</code></td><td><code>[mvs]</code></td><td>相机类型：<code>mvs</code> = 海康；<code>opencv</code> = 普通 USB 摄像头</td></tr>
 <tr><td><code>cameras.arduino_port</code></td><td><code>auto</code></td><td>Arduino 串口。<code>auto</code> = 自动查找；也可以写 <code>"COM3"</code>；<code>none</code> = 不用</td></tr>
 <tr><td><code>cameras.order</code></td><td><code>[]</code></td><td>按序列号固定 cam-1、cam-2 …… 的顺序</td></tr>
@@ -949,14 +959,14 @@ clip-2026-10-20-143205    1214        1214        yes</pre></div>
 <details><summary>网页提示“没有通过 USB 找到 Arduino”</summary>
 <ul>
   <li>关闭 Arduino IDE 的串口监视器（它会占用串口）。</li>
-  <li>在设备管理器的“端口 (COM 和 LPT)”中找到 Arduino 的 COM 号，写进配置：<code>arduino_port: "COM3"</code>。</li>
+  <li>在设备管理器的“端口 (COM 和 LPT)”中找到 Arduino 的 COM 号（原装 UNO 可能显示为 “USB 串行设备 (COM5)”，不一定带 Arduino 字样；蓝牙串口不是），写进配置：<code>arduino_port: "COM5"</code>。</li>
   <li>兼容板需要安装 CH340 驱动（见 <a href="#sw-arduino">6.5</a>）。</li>
 </ul>
 <p>没有 USB 连接时也能录制，但相机之间的帧对齐改用到达时间估计，精度较低。</p></details>
 <details><summary>check 显示某个片段 “NO”</summary>
 <p>说明这个片段中各相机的帧数不同。触发模式下这不应该发生。请保存 <code>mouse-rig check</code> 的输出、<span class="path">session.json</span> 和 <span class="path">logs</span> 文件夹，用于排查。</p></details>
 <details><summary>录制自动停止了</summary>
-<p>网页上方会显示原因。常见原因：磁盘剩余空间低于 <code>min_free_gb</code>，或达到了 <code>max_minutes</code>。</p></details>
+<p>网页上方会显示原因。常见原因：定时录制到了设定的分钟数（显示“定时录制完成”，这是正常结束），或磁盘剩余空间低于 <code>min_free_gb</code>。</p></details>
 <details><summary>视频打不开</summary>
 <p>用 VLC 播放器打开。如果 VLC 也打不开，查看 <span class="path">logs\ffmpeg-cam-N.log</span> 中的错误。</p></details>
 </section>
@@ -976,10 +986,10 @@ clip-2026-10-20-143205    1214        1214        yes</pre></div>
   <li><label><input type="checkbox" data-k="order"><span class="ck">相机顺序（<code>order</code>）、标签、曝光和增益已写进 <code>recorder.local.yaml</code>。</span></label></li>
   <li><label><input type="checkbox" data-k="free"><span class="ck">自由运行模式录制 2 分钟，<code>mouse-rig check</code> 正常。</span></label></li>
   <li><label><input type="checkbox" data-k="led"><span class="ck">Arduino 程序已上传：L 灯亮 1 秒灭 1 秒；串口 <code>?</code> 返回 <code>fps=60 running=yes</code>；串口监视器已关闭。</span></label></li>
-  <li><label><input type="checkbox" data-k="wire"><span class="ck">接线已用万用表确认：黄线（第 2 针）→ D9–D12，绿线（第 5 针）→ GND，橙线和其余线没有接并已绝缘。</span></label></li>
+  <li><label><input type="checkbox" data-k="wire"><span class="ck">接线已用万用表确认：黄线（第 2 针）→ 470 Ω 电阻 → D9–D12，绿线（第 5 针）→ GND，橙线和其余线没有接并已绝缘。</span></label></li>
   <li><label><input type="checkbox" data-k="sync"><span class="ck">改成 <code>trigger: "line0"</code> 后，网页“同步”一格显示 Arduino 的 COM 口和 60 fps。</span></label></li>
   <li><label><input type="checkbox" data-k="unplug"><span class="ck">拔掉 Arduino USB 后，所有画面停住；插回并点“重新连接相机”后恢复。</span></label></li>
-  <li><label><input type="checkbox" data-k="trig3"><span class="ck">触发模式录制 3 分钟，<code>mouse-rig check --decode</code> 每个片段都是 <code>yes</code>，完整片段是 3600 帧。</span></label></li>
+  <li><label><input type="checkbox" data-k="trig3"><span class="ck">触发模式定时录制 3 分钟（“定时”一格填 3）：自动停止，<code>mouse-rig check --decode</code> 正好 3 个片段，每个 <code>3600/3600</code> 帧，都是 <code>yes</code>。</span></label></li>
   <li><label><input type="checkbox" data-k="size"><span class="ck">记下每台相机每分钟的文件大小（session.json 的 <code>size_mb</code> ÷ 分钟数 ÷ 相机数）。</span></label></li>
   <li><label><input type="checkbox" data-k="hour"><span class="ck">连续录制 1 小时：没有丢帧（dropped / lost / filled 都是 0），电脑没有睡眠，磁盘空间正常。</span></label></li>
 </ul>

@@ -24,7 +24,7 @@ Personal, non-commercial project. Two parts live here:
 | Record with cameras | `start_recorder_windows.bat` | — (no Hikrobot MVS for macOS) |
 | Command window (`mouse-rig cameras`, `mouse-rig check`) | `open_terminal_windows.bat` | `open_terminal_mac.command` |
 
-The recorder opens `http://127.0.0.1:8765`. Click **开始录制**; every camera writes
+The recorder opens `http://127.0.0.1:8765`. Click **开始录制** (optionally fill in **定时 N 分钟** first: the recording then stops by itself after exactly N minutes = N full clips); every camera writes
 `<output_dir>/YYYY-MM-DD-HHMMSS/clip-YYYY-MM-DD-HHMMSS/cam-N.mp4` (+ `cam-N.frames.csv`), one clip per minute.
 Settings live in `rig/config/recorder.local.yaml` (created by the installer, not in git).
 

@@ -119,3 +119,33 @@ def test_pixel_conversion(ptype, shape):
 def test_rgb_is_converted_to_bgr():
     img = pixel.to_image(bytes([10, 20, 30] * 4), 2, 2, pixel.RGB8)
     assert tuple(img[0, 0]) == (30, 20, 10)
+
+
+def test_timed_free_run_recording_is_whole_clips(tmp_path):
+    cfg = _cfg(tmp_path)
+    mgr = CameraManager(cfg)
+    mgr.open_all()
+    try:
+        deadline = time.time() + 5
+        while time.time() < deadline and not all(s["state"] == "ok" for s in mgr.status()):
+            time.sleep(0.1)
+        session = RecordingSession(cfg, mgr, minutes=2 * CLIP_S / 60)
+        path = session.start()
+        deadline = time.time() + 15
+        while session.state != "stopped" and time.time() < deadline:
+            time.sleep(0.1)
+        assert session.state == "stopped" and session.limit_reached
+    finally:
+        mgr.close_all()
+    clips = sorted(p for p in path.iterdir() if p.is_dir() and p.name.startswith("clip-"))
+    assert len(clips) == 2
+    for clip in clips:
+        assert abs(_count_frames(clip / "cam-1.mp4") - CLIP_S * FPS) <= 3
+
+
+def test_bad_recording_length_is_rejected(tmp_path):
+    with pytest.raises(ValueError):
+        RecordingSession(_cfg(tmp_path), None, minutes=-1)
+    for bad in ("five", float("inf"), float("nan")):
+        with pytest.raises(ValueError):
+            RecordingSession(_cfg(tmp_path), None, minutes=bad)
