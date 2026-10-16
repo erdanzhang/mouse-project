@@ -1,0 +1,56 @@
+# 录制服务配置 / Recorder configuration
+# 这是模板。安装脚本会把它复制成 recorder.local.yaml（本机设置，不进 git）。
+# 请修改 recorder.local.yaml，不要改这个文件；这样 git pull 更新时不会冲突。
+# 修改后需要重新启动录制服务（关闭服务窗口，再运行启动脚本）。
+# 注意：YAML 用空格缩进，不要用 Tab。
+
+server:
+  host: 127.0.0.1          # 127.0.0.1 = 只有本机能打开网页；改成 0.0.0.0 可让同一局域网的其他电脑访问
+  port: 8765               # 网页地址 http://127.0.0.1:8765
+  open_browser: true       # 启动后自动打开浏览器
+
+recording:
+  output_dir: ~/MouseRecordings   # 录像根目录（~ 表示用户主目录）。Windows 示例: D:/MouseRecordings
+  clip_seconds: 60                # 每个片段的长度（秒）
+  container: mp4                  # mp4（分段式 MP4，程序意外退出也能播放）| mkv
+  codec: h264                     # h264（兼容性最好）| h265（文件更小，旧软件可能打不开）
+  encoder: auto                   # auto = 自动选择（NVIDIA 显卡用 h264_nvenc，Mac 用 h264_videotoolbox，否则 libx264）
+  quality: balanced               # high（最清晰，文件最大）| balanced（推荐）| small（文件最小）
+  x264_preset: veryfast           # 只对 libx264（CPU 编码）有效；CPU 跟不上时改成 superfast
+  min_free_gb: 10                 # 磁盘剩余空间低于这个值（GB）时自动停止录制
+  max_minutes: 0                  # 单次录制的最长分钟数；0 = 不限制
+  queue_seconds: 3                # 编码器来不及时，每台相机最多缓存几秒的画面
+
+cameras:
+  # 相机后端：mvs = 海康机器人相机（需要安装 MVS）；opencv = 普通 USB 摄像头；synthetic = 演示用的虚拟相机
+  backends: [mvs]
+  mvs_python_path: null           # MVS 的 MvImport 文件夹。null = 自动查找（Windows 默认安装位置）
+  # 触发用的 Arduino（只在 trigger: "line0" 时使用）。auto = 自动在 USB 串口上查找；
+  # 也可以写端口名，例如 "COM3"（Windows）；none = 不用 USB 串口控制 Arduino。
+  # 找到 Arduino 后，录制服务会自动把 Arduino 的帧率设成下面的 fps，并让所有相机从同一个脉冲开始计数。
+  arduino_port: auto
+
+  # 所有相机的默认参数
+  default:
+    fps: 60                       # 帧率。触发模式下，录制服务通过 USB 把这个值发给 Arduino
+    exposure_us: 4000             # 曝光时间（微秒）。快速动作建议 ≤ 4000；必须小于 1/fps（60 fps 时 < 16000）
+    gain_db: 0                    # 增益（dB）。画面太暗时先加红外光，再加增益
+    trigger: "free"               # "free" = 自由运行（先用这个测试）；"line0" = 由 Arduino 硬件触发（多相机同步）
+    pixel_format: auto            # auto = 黑白相机 Mono8，彩色相机 BayerRG8
+
+  # 固定相机编号：按序列号的顺序编号为 cam-1、cam-2 ……
+  # 运行 `mouse-rig cameras` 可以看到每台相机的序列号，把它们按想要的顺序填进来。
+  order: []
+  # order: ["DA1234567", "DA7654321", "DA1111111", "DA2222222"]
+
+  # 按序列号单独设置某台相机（只写需要改的项）
+  overrides: {}
+  # overrides:
+  #   DA1234567: {label: "黑白-左", exposure_us: 3000}
+  #   DA7654321: {label: "黑白-右"}
+  #   DA1111111: {enabled: false}       # 暂时不用这台相机
+
+  # 演示模式（mouse-rig serve --demo）的虚拟相机
+  synthetic: {count: 2, width: 1440, height: 1080}
+  # 普通 USB 摄像头（backends 里加上 opencv 才会使用）
+  opencv: {indices: [0]}

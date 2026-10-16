@@ -5,4 +5,4 @@ platform-specific concerns (camera capture, video encode, model compute) live
 behind interfaces that are feature-detected at runtime. See docs/PLATFORM.md.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"

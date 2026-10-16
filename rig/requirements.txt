@@ -3,6 +3,8 @@
 numpy>=1.23
 opencv-python>=4.7
 pyyaml>=6.0
+imageio-ffmpeg>=0.4.9
+pyserial>=3.5
 
 # Optional extras (install only where needed):
 #   pip install -r requirements-capture.txt   # real cameras (Win/Linux + MVS)

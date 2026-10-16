@@ -19,6 +19,7 @@ are feature-detected at runtime — see [`docs/PLATFORM.md`](docs/PLATFORM.md).
 |-----------|------|-------|
 | **M0** | Repo + platform capability harness (`mouse-rig report`) | ✅ in this repo |
 | **M1** | Key-pixel gate (`mouse-rig gate`) — runs on any OS | ✅ in this repo |
+| **Recorder** | Web UI + one-click recording, 1-min clips, Hikrobot MVS backend, Arduino Line0 sync (`mouse-rig serve`) | ✅ tested with synthetic cameras; hardware test next |
 | M2–M5 | Camera bring-up, sync, calibration, dry-run | needs the rig |
 | M6–M7 | Behavior model + active-learning loop | needs mice |
 
@@ -41,6 +42,22 @@ pip install -r requirements-models.txt    # pose / behavior models (M6+)
 a Mac). Without it, the gate falls back to OpenCV's mp4v writer.
 
 ## Use
+
+**Recorder — web UI, one-click recording** (installation guide: [`../docs/installation-guide.html`](../docs/installation-guide.html))
+
+```bash
+mouse-rig serve --demo        # 2 virtual cameras, no hardware
+mouse-rig serve               # real cameras (Hikrobot MVS, Windows/Linux)
+mouse-rig cameras             # list cameras + serial numbers
+mouse-rig check [SESSION]     # frames per camera per clip (add --decode to count video frames)
+mouse-rig record --seconds 30 # headless recording
+```
+
+Clips: `<output_dir>/<session>/clip-<time>/cam-N.mp4` + `cam-N.frames.csv`, cut every
+`clip_seconds`. With `trigger: "line0"`, every frame gets a shared Arduino trigger
+index and clips are cut by that index, so frame *i* of a clip is the same pulse in
+every camera (lost frames are filled with the previous image and flagged in the CSV).
+Config: `config/recorder.yaml` (template) → `config/recorder.local.yaml` (this computer).
 
 **M0 — what can this machine do?**
 
@@ -75,15 +92,19 @@ JSON sidecar with the active segments and ROI.
 
 ```bash
 pip install pytest
-pytest                 # M0 + M1 smoke/e2e tests — pass on any OS
+pytest                 # all tests — synthetic cameras, pass on any OS
 ```
 
 ## Layout
 
 ```
 src/mouse_rig/
-  capabilities.py        # runtime probe: OS, ffmpeg encoders, torch device, GenICam
+  capabilities.py        # runtime probe: OS, ffmpeg encoders, torch device, MVS, GenICam
   cli.py                 # `mouse-rig` entrypoint
+  cameras/               # Camera interface + backends: mvs (Hikrobot), opencv (webcam), synthetic (demo)
+  recorder/              # config, ffmpeg encoder pick, clip writer, camera manager, session,
+                         #   sync.py (trigger index), arduino.py (USB serial link to the trigger)
+  server/                # web UI (stdlib http.server) + static/index.html
   backends/
     frame_source.py      # FrameSource: File / Webcam / GenICam
     encoder.py           # Encoder: NVENC / VideoToolbox / x265 / OpenCV (+ auto-pick)
@@ -91,9 +112,10 @@ src/mouse_rig/
   processing/
     motion_gate.py       # M1 key-pixel gate
   commands/              # report, gate
-tests/                   # test_capabilities.py (M0), test_gate.py (M1)
+tests/                   # capabilities, gate, recorder, server, sync (all hardware-free)
 docs/PLATFORM.md         # what's platform-specific and how it's abstracted
-config/default.yaml      # rig config template (no secrets)
+config/recorder.yaml     # recorder config template (Chinese comments, no secrets)
+hardware/sync_trigger/   # Arduino UNO trigger sketch (D9-D12 -> camera Line0)
 ```
 
 ## License

@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>小鼠录制系统安装指南</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{
+  --bg:#f6f5f1; --paper:#ffffff; --fg:#1d2124; --muted:#5d666d; --line:#dcdad3; --soft:#eeece6;
+  --accent:#0e6b6b; --accent-soft:#e1efee; --code-bg:#f0efe9; --code-fg:#23292e;
+  --warn:#8a5a00; --warn-bg:#fdf3dc; --warn-line:#e9c46a;
+  --danger:#a1262c; --danger-bg:#fbe7e6; --danger-line:#e08a8d;
+  --note-bg:#e8eff7; --note-line:#9db7d6; --ok:#2b7a3d;
+  --wire-yellow:#d9a400; --wire-green:#2f9e44; --wire-orange:#e8770e; --wire-usb:#1f6fc5; --wire-gray:#8a9399; --ir:#b0303a;
+  --svg-box:#ffffff; --svg-box2:#f3f2ec; --svg-line:#3a4248; --svg-text:#1d2124; --svg-muted:#66707a; --board:#1d6f8f; --board-text:#ffffff;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15191b; --paper:#1c2124; --fg:#e4e7e8; --muted:#a3acb2; --line:#343c41; --soft:#232a2e;
+    --accent:#5cc4c0; --accent-soft:#1d3433; --code-bg:#11161a; --code-fg:#dfe5e8;
+    --warn:#f0c46c; --warn-bg:#2e2716; --warn-line:#7a6430;
+    --danger:#f1959a; --danger-bg:#331b1d; --danger-line:#7d3a3e;
+    --note-bg:#1b2632; --note-line:#3e5873; --ok:#7bd38c;
+    --wire-yellow:#f2c230; --wire-green:#4cc463; --wire-orange:#ff9433; --wire-usb:#5aa2ef; --wire-gray:#8e989f; --ir:#ff6b74;
+    --svg-box:#232a2e; --svg-box2:#1a1f22; --svg-line:#b9c2c7; --svg-text:#e4e7e8; --svg-muted:#9ba5ab; --board:#1f5f78; --board-text:#e8f6fb;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15191b; --paper:#1c2124; --fg:#e4e7e8; --muted:#a3acb2; --line:#343c41; --soft:#232a2e;
+  --accent:#5cc4c0; --accent-soft:#1d3433; --code-bg:#11161a; --code-fg:#dfe5e8;
+  --warn:#f0c46c; --warn-bg:#2e2716; --warn-line:#7a6430;
+  --danger:#f1959a; --danger-bg:#331b1d; --danger-line:#7d3a3e;
+  --note-bg:#1b2632; --note-line:#3e5873; --ok:#7bd38c;
+  --wire-yellow:#f2c230; --wire-green:#4cc463; --wire-orange:#ff9433; --wire-usb:#5aa2ef; --wire-gray:#8e989f; --ir:#ff6b74;
+  --svg-box:#232a2e; --svg-box2:#1a1f22; --svg-line:#b9c2c7; --svg-text:#e4e7e8; --svg-muted:#9ba5ab; --board:#1f5f78; --board-text:#e8f6fb;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Noto Sans SC","Source Han Sans SC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.75;-webkit-text-size-adjust:100%}
+code,kbd,pre,.mono{font-family:ui-monospace,"Cascadia Mono","Cascadia Code",Consolas,"SF Mono",Menlo,"Courier New",monospace}
+a{color:var(--accent);text-underline-offset:2px}
+a:hover{text-decoration-thickness:2px}
+img{max-width:100%;height:auto}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:32px;max-width:1180px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+@media (min-width:1040px){.layout{grid-template-columns:250px minmax(0,1fr)}}
+nav.toc{font-size:14px;line-height:1.5}
+@media (min-width:1040px){nav.toc{position:sticky;top:max(16px,env(safe-area-inset-top,0px));align-self:start;max-height:calc(100vh - 32px);overflow:auto;padding-right:8px}}
+nav.toc .label{font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+nav.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+nav.toc a{display:block;padding:4px 8px;border-radius:6px;color:var(--fg);text-decoration:none}
+nav.toc a:hover{background:var(--soft)}
+nav.toc a.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav.toc .num{display:inline-block;min-width:1.8em;color:var(--muted);font-variant-numeric:tabular-nums}
+@media (max-width:1039px){nav.toc{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 12px 8px}
+  nav.toc ol{grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr))}}
+
+main{min-width:0;max-width:820px}
+header.doc{border-bottom:2px solid var(--fg);padding-bottom:18px;margin-bottom:8px}
+header.doc .kicker{font-size:13px;letter-spacing:.12em;color:var(--accent);font-weight:600}
+h1{font-size:clamp(26px,4.2vw,36px);line-height:1.25;margin:6px 0 10px;text-wrap:balance;letter-spacing:.01em}
+header.doc p{margin:4px 0;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin-top:10px}
+.meta b{color:var(--fg);font-weight:600}
+
+section{padding-top:28px}
+h2{font-size:24px;line-height:1.35;margin:18px 0 12px;padding-top:14px;border-top:1px solid var(--line);text-wrap:balance;display:flex;gap:12px;align-items:baseline}
+h2 .n{font-size:14px;font-weight:600;color:var(--paper);background:var(--accent);border-radius:6px;padding:1px 8px;line-height:1.6;flex:none;font-variant-numeric:tabular-nums}
+h3{font-size:18.5px;line-height:1.4;margin:26px 0 8px;text-wrap:balance}
+h4{font-size:16px;margin:18px 0 6px}
+p{margin:8px 0}
+ul,ol{padding-left:1.4em;margin:8px 0}
+li{margin:3px 0}
+strong{font-weight:650}
+.lead{font-size:17px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+
+code{background:var(--code-bg);color:var(--code-fg);border-radius:4px;padding:1px 5px;font-size:.88em;word-break:break-word}
+kbd{background:var(--paper);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;font-size:.85em}
+.path{background:var(--code-bg);color:var(--code-fg);border-radius:4px;padding:1px 5px;font-size:.88em;word-break:break-all}
+
+.cmd{position:relative;margin:10px 0 14px}
+.cmd pre{margin:0;background:var(--code-bg);color:var(--code-fg);border:1px solid var(--line);border-radius:8px;padding:12px 84px 12px 14px;overflow-x:auto;font-size:14px;line-height:1.55;white-space:pre}
+.cmd .tag{position:absolute;left:12px;top:-9px;font-size:11px;letter-spacing:.06em;background:var(--paper);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 6px;line-height:16px}
+.cmd button{position:absolute;right:8px;top:8px;font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--paper);color:var(--fg);border-radius:6px;padding:3px 10px;cursor:pointer}
+.cmd button:hover{border-color:var(--accent);color:var(--accent)}
+.cmd button.done{color:var(--ok);border-color:var(--ok)}
+
+ol.steps{list-style:none;padding:0;counter-reset:s;display:grid;gap:10px;margin:12px 0}
+ol.steps>li{counter-increment:s;position:relative;padding:2px 0 2px 42px;margin:0;min-width:0}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:2px;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);font-weight:650;font-size:14px;display:grid;place-items:center;font-variant-numeric:tabular-nums;background:var(--paper)}
+
+.callout{border-left:4px solid var(--note-line);background:var(--note-bg);border-radius:0 8px 8px 0;padding:10px 14px;margin:14px 0}
+.callout>.t{font-weight:650;display:block;margin-bottom:2px}
+.callout p{margin:4px 0}
+.callout.warn{border-color:var(--warn-line);background:var(--warn-bg)}
+.callout.warn>.t{color:var(--warn)}
+.callout.danger{border-color:var(--danger-line);background:var(--danger-bg)}
+.callout.danger>.t{color:var(--danger)}
+.callout.tip{border-color:var(--accent);background:var(--accent-soft)}
+.callout.tip>.t{color:var(--accent)}
+
+.tablewrap{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:8px 12px;border-bottom:1px solid var(--line)}
+th{background:var(--soft);font-weight:650;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{white-space:nowrap}
+
+figure{margin:16px 0;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px}
+figure .svgwrap{overflow-x:auto}
+figure svg{display:block;width:100%;height:auto;min-width:640px}
+figcaption{font-size:13.5px;color:var(--muted);margin-top:8px;line-height:1.55}
+figure img{display:block;border-radius:6px;border:1px solid var(--line)}
+
+.route{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));margin:14px 0;padding:0;list-style:none;counter-reset:r}
+.route li{counter-increment:r;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px 10px 46px;position:relative;margin:0;min-width:0}
+.route li::before{content:counter(r);position:absolute;left:12px;top:10px;font-weight:700;color:var(--accent);font-size:20px;line-height:1.2;font-variant-numeric:tabular-nums}
+.route a{font-weight:600;text-decoration:none}
+.route span{display:block;font-size:13px;color:var(--muted);line-height:1.5}
+
+.tree{background:var(--code-bg);color:var(--code-fg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-size:13.5px;line-height:1.6;white-space:pre;margin:12px 0}
+.tree .c{color:var(--muted)}
+
+details{background:var(--paper);border:1px solid var(--line);border-radius:8px;margin:8px 0;padding:0 14px}
+details[open]{padding-bottom:10px}
+summary{cursor:pointer;padding:10px 0;font-weight:600;list-style-position:outside}
+summary::marker{color:var(--accent)}
+
+.checklist{list-style:none;padding:0;margin:12px 0;display:grid;gap:6px}
+.checklist li{margin:0}
+.checklist label{display:flex;gap:10px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+.checklist input{margin-top:6px;width:17px;height:17px;flex:none;accent-color:var(--accent)}
+.checklist label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.checklist label:has(input:checked) .ck{text-decoration:line-through;text-decoration-color:var(--muted)}
+.progress{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.progress .bar{flex:1;height:8px;background:var(--soft);border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.progress .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.btn-reset{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:6px;padding:3px 10px;cursor:pointer}
+
+.twocol{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));margin:12px 0}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.card h4{margin-top:0}
+
+footer.doc{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+
+/* SVG */
+.s-box{fill:var(--svg-box);stroke:var(--svg-line);stroke-width:1.5}
+.s-box2{fill:var(--svg-box2);stroke:var(--svg-line);stroke-width:1.2}
+.s-t{fill:var(--svg-text);font-size:14px;font-family:inherit}
+.s-tb{fill:var(--svg-text);font-size:15px;font-weight:700;font-family:inherit}
+.s-m{fill:var(--svg-muted);font-size:12px;font-family:inherit}
+.s-board{fill:var(--board);stroke:var(--svg-line);stroke-width:1.5}
+.s-bt{fill:var(--board-text);font-size:13px;font-family:inherit}
+.s-btb{fill:var(--board-text);font-size:16px;font-weight:700;font-family:inherit}
+.w-usb{stroke:var(--wire-usb);stroke-width:3;fill:none}
+.w-y{stroke:var(--wire-yellow);stroke-width:3;fill:none}
+.w-g{stroke:var(--wire-green);stroke-width:3;fill:none}
+.w-o{stroke:var(--wire-orange);stroke-width:3;fill:none}
+.w-gray{stroke:var(--wire-gray);stroke-width:2.5;fill:none}
+.w-ir{stroke:var(--ir);stroke-width:1.6;fill:none;stroke-dasharray:6 5}
+.w-dim{stroke:var(--svg-muted);stroke-width:1.2;fill:none}
+.w-fov{stroke:var(--svg-muted);stroke-width:1.2;fill:none;stroke-dasharray:4 4}
+.f-y{fill:var(--wire-yellow)} .f-g{fill:var(--wire-green)} .f-o{fill:var(--wire-orange)} .f-usb{fill:var(--wire-usb)} .f-gray{fill:var(--wire-gray)} .f-ir{fill:var(--ir)}
+.f-line{fill:var(--svg-line)}
+.pin{fill:#2a2f33;stroke:#c9d2d6;stroke-width:1}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc" aria-label="目录">
+  <div class="label">目录</div>
+  <ol>
+    <li><a href="#overview"><span class="num">0</span>总览和顺序</a></li>
+    <li><a href="#bom"><span class="num">1</span>硬件清单</a></li>
+    <li><a href="#topology"><span class="num">2</span>系统连接图</a></li>
+    <li><a href="#mount"><span class="num">3</span>相机、镜头和红外灯</a></li>
+    <li><a href="#wiring"><span class="num">4</span>触发接线</a></li>
+    <li><a href="#pc"><span class="num">5</span>电脑设置</a></li>
+    <li><a href="#software"><span class="num">6</span>安装软件和驱动</a></li>
+    <li><a href="#arduino"><span class="num">7</span>上传 Arduino 程序</a></li>
+    <li><a href="#firstrun"><span class="num">8</span>第一次运行</a></li>
+    <li><a href="#daily"><span class="num">9</span>日常录制流程</a></li>
+    <li><a href="#files"><span class="num">10</span>录像文件说明</a></li>
+    <li><a href="#config"><span class="num">11</span>配置参考</a></li>
+    <li><a href="#faq"><span class="num">12</span>常见问题</a></li>
+    <li><a href="#checklist"><span class="num">13</span>硬件首测清单</a></li>
+    <li><a href="#mac"><span class="num">14</span>在 Mac 上使用</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="doc">
+  <div class="kicker">MOUSE-PROJECT · 安装指南</div>
+  <h1>小鼠行为多相机录制系统：安装指南</h1>
+  <p class="lead">本指南说明如何安装硬件（相机、镜头、红外灯、Arduino 触发器）和软件（相机驱动、录制服务），并完成第一次录制。</p>
+  <div class="meta">
+    <span><b>适用版本</b> mouse-rig 0.1.0</span>
+    <span><b>录制电脑</b> Windows 10/11 64 位（主要）· macOS（只用于演示和分析）</span>
+    <span><b>代码</b> github.com/erdanzhang/mouse-project</span>
+    <span><b>更新</b> 2026-10-16</span>
+  </div>
+</header>
+
+<!-- 0 ─────────────────────────────────────────── -->
+<section id="overview">
+<h2><span class="n">0</span>总览和顺序</h2>
+<p>系统由 2–4 台海康机器人（Hikrobot）USB3 工业相机、1 块 Arduino UNO 和 1 台录制电脑组成。Arduino 给所有相机同时发出触发脉冲，所以每台相机在同一时刻拍下一帧。</p>
+<p>录制服务是一个 Python 程序。启动后，它在浏览器中打开一个网页。在网页上点击“开始录制”，录像自动按 1 分钟切成片段，保存为 H.264 MP4 文件。</p>
+
+<h3>第一次安装的顺序</h3>
+<p>请按下面的顺序做。每一步都有链接，指向详细说明。总时间约 3–4 小时（不含买东西的时间）。</p>
+<ol class="route">
+  <li><a href="#bom">核对硬件清单</a><span>10 分钟</span></li>
+  <li><a href="#pc">设置电脑：USB 和电源</a><span>15 分钟</span></li>
+  <li><a href="#software">安装 Python、Git、MVS 驱动、Arduino IDE</a><span>40 分钟</span></li>
+  <li><a href="#sw-install">运行 install_windows.bat</a><span>5 分钟</span></li>
+  <li><a href="#demo">演示模式试录（不接相机）</a><span>5 分钟</span></li>
+  <li><a href="#mount">装镜头，接相机 USB，在 MVS 中看到画面</a><span>30 分钟</span></li>
+  <li><a href="#freerun">真实相机：自由运行模式试录</a><span>20 分钟</span></li>
+  <li><a href="#arduino">上传 Arduino 程序</a><span>10 分钟</span></li>
+  <li><a href="#wiring">触发接线（黄线、绿线）</a><span>20 分钟</span></li>
+  <li><a href="#trigger">切换到触发模式，检查同步</a><span>15 分钟</span></li>
+  <li><a href="#checklist">完成硬件首测清单</a><span>1 小时（含 1 小时连续录制）</span></li>
+</ol>
+
+<div class="callout tip"><span class="t">先用演示模式</span>
+<p>没有相机时，也可以运行完整的软件。双击 <code>start_demo_windows.bat</code>，程序用 2 台虚拟相机录制。先用演示模式确认软件安装正确，再接真实相机。</p></div>
+</section>
+
+<!-- 1 ─────────────────────────────────────────── -->
+<section id="bom">
+<h2><span class="n">1</span>硬件清单</h2>
+<p>下表是 1 套系统（最多 4 台相机）的清单。“数量”按 4 台相机计算。只接 2 台相机时，相机相关的数量减半。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>物品</th><th>型号 / 规格</th><th class="num">数量</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td>黑白相机</td><td><code>MV-CS016-10UM</code>（160 万像素，1440×1080，全局快门，USB3）</td><td class="num">2</td><td>红外（940 nm）录制用</td></tr>
+<tr><td>彩色相机</td><td>已有的 2 台海康 USB3 彩色相机</td><td class="num">2</td><td>彩色相机有红外截止滤光片，<strong>只能在可见光下用</strong>，在红外光下几乎全黑</td></tr>
+<tr><td>镜头</td><td><code>MVL-MF0824M-5MPE</code>（8 mm，F2.4，C 口，2/3″）</td><td class="num">4</td><td>前端滤镜螺纹 M35.5×0.5</td></tr>
+<tr><td>USB3 线</td><td>相机配套 USB3.0 线（Micro-B，带锁紧螺丝），建议 ≤ 3 m</td><td class="num">4</td><td>不要用 USB 延长线和 HUB</td></tr>
+<tr><td>I/O 线</td><td><code>MV-ACC-01-2101</code>（6 针 I/O 线，一端是相机插头，一端是散线）</td><td class="num">4</td><td>每台相机 1 根，用于触发</td></tr>
+<tr><td>Arduino</td><td>Arduino UNO R3（或兼容板）+ USB A–B 线</td><td class="num">1</td><td>由电脑 USB 供电</td></tr>
+<tr><td>接线材料</td><td>杜邦线（公头）、小面包板或接线端子（如 Wago 221）、电工胶带或热缩管</td><td class="num">1 套</td><td>用于把 4 根绿线合到一个 GND</td></tr>
+<tr><td>红外灯</td><td>940 nm“无红暴”红外补光灯，DC 12 V，常亮</td><td class="num">2</td><td>每个录制位 2 个；配 12 V 电源适配器</td></tr>
+<tr><td>柔光材料</td><td>柔光纸或磨砂亚克力板</td><td class="num">2</td><td>放在红外灯前面，减少亮斑</td></tr>
+<tr><td>三脚架</td><td>带横臂的三脚架 + 1/4 英寸螺丝</td><td class="num">4</td><td>相机从正上方向下拍</td></tr>
+<tr><td>场地</td><td>无刻度玻璃烧杯，直径 15 cm 和 20 cm</td><td class="num">按需</td><td>每杯 1–3 只小鼠</td></tr>
+<tr><td>底板</td><td>哑光（不反光）底板或布</td><td class="num">按需</td><td>白色小鼠用深色底；黑色小鼠用浅色底</td></tr>
+<tr><td>录制电脑</td><td>Windows 10/11 64 位；USB3 口；SSD；NVIDIA 显卡（可选，用于硬件编码）</td><td class="num">1</td><td>4 台相机时建议加 1 块 PCIe USB3 扩展卡</td></tr>
+<tr><td>滤光片（可选）</td><td>940 nm 带通滤光片，M35.5×0.5 螺纹</td><td class="num">0–4</td><td>可以不买。室内灯光干扰大时再加</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="t">为什么用黑白相机</span>
+<p>黑白相机没有彩色滤镜，对 940 nm 红外光更敏感，画面更清晰。940 nm 光小鼠看不见，不影响它们的昼夜节律。</p></div>
+</section>
+
+<!-- 2 ─────────────────────────────────────────── -->
+<section id="topology">
+<h2><span class="n">2</span>系统连接图</h2>
+<p>相机通过 USB3 线把画面传到电脑，同时从 USB 取电。Arduino 通过 I/O 线给每台相机发触发脉冲。红外灯用自己的 12 V 电源，和电脑、Arduino 都不相连。</p>
+<figure>
+<div class="svgwrap">
+<svg viewBox="0 0 900 570" role="img" aria-label="系统连接图：4 台相机通过 USB3 连到电脑的两个 USB3 控制器，I/O 线连到 Arduino 的 D9 到 D12 和 GND，Arduino 通过 USB 连到电脑，红外灯单独供电">
+  <!-- USB3 cables (draw first, under boxes) -->
+  <path class="w-usb" d="M226 50 H636 V82 H660"/>
+  <path class="w-usb" d="M226 150 H624 V102 H660"/>
+  <path class="w-usb" d="M226 250 H612 V182 H660"/>
+  <path class="w-usb" d="M226 350 H600 V202 H660"/>
+  <text class="s-m" x="300" y="40">USB3 线：每台相机直接插电脑，不用 HUB</text>
+  <!-- green GND bus -->
+  <path class="w-g" d="M226 94 H262"/><path class="w-g" d="M226 194 H262"/><path class="w-g" d="M226 294 H262"/><path class="w-g" d="M226 394 H262"/>
+  <path class="w-g" d="M262 94 V492 H360"/>
+  <circle class="f-g" cx="262" cy="194" r="4"/><circle class="f-g" cx="262" cy="294" r="4"/><circle class="f-g" cx="262" cy="394" r="4"/>
+  <!-- yellow trigger lines -->
+  <path class="w-y" d="M226 82 H330 V402 H360"/>
+  <path class="w-y" d="M226 182 H315 V422 H360"/>
+  <path class="w-y" d="M226 282 H300 V442 H360"/>
+  <path class="w-y" d="M226 382 H285 V462 H360"/>
+  <!-- Arduino USB -->
+  <path class="w-gray" d="M550 452 H640 V268 H660"/>
+  <text class="s-m" x="566" y="444">USB</text>
+
+  <!-- cameras -->
+  <g>
+    <rect class="s-box" x="40" y="30" width="180" height="76" rx="8"/>
+    <text class="s-tb" x="54" y="55">cam-1</text><text class="s-t" x="54" y="76">黑白 MV-CS016-10UM</text><text class="s-m" x="54" y="95">+ 8 mm 镜头</text>
+    <rect class="s-box" x="40" y="130" width="180" height="76" rx="8"/>
+    <text class="s-tb" x="54" y="155">cam-2</text><text class="s-t" x="54" y="176">黑白 MV-CS016-10UM</text><text class="s-m" x="54" y="195">+ 8 mm 镜头</text>
+    <rect class="s-box" x="40" y="230" width="180" height="76" rx="8"/>
+    <text class="s-tb" x="54" y="255">cam-3</text><text class="s-t" x="54" y="276">彩色相机（已有）</text><text class="s-m" x="54" y="295">只用于可见光</text>
+    <rect class="s-box" x="40" y="330" width="180" height="76" rx="8"/>
+    <text class="s-tb" x="54" y="355">cam-4</text><text class="s-t" x="54" y="376">彩色相机（已有）</text><text class="s-m" x="54" y="395">只用于可见光</text>
+    <!-- ports -->
+    <rect class="f-usb" x="214" y="44" width="12" height="12" rx="2"/><rect class="f-usb" x="214" y="144" width="12" height="12" rx="2"/><rect class="f-usb" x="214" y="244" width="12" height="12" rx="2"/><rect class="f-usb" x="214" y="344" width="12" height="12" rx="2"/>
+    <rect class="f-line" x="214" y="76" width="12" height="24" rx="2"/><rect class="f-line" x="214" y="176" width="12" height="24" rx="2"/><rect class="f-line" x="214" y="276" width="12" height="24" rx="2"/><rect class="f-line" x="214" y="376" width="12" height="24" rx="2"/>
+  </g>
+
+  <!-- PC -->
+  <rect class="s-box" x="660" y="20" width="220" height="300" rx="10"/>
+  <text class="s-tb" x="676" y="44">录制电脑</text><text class="s-m" x="676" y="60">Windows 10/11 64 位</text>
+  <rect class="s-box2" x="672" y="68" width="196" height="48" rx="6"/>
+  <text class="s-t" x="682" y="88">USB3 控制器 A</text><text class="s-m" x="682" y="106">主板后面板蓝色口</text>
+  <rect class="s-box2" x="672" y="166" width="196" height="50" rx="6"/>
+  <text class="s-t" x="682" y="188">USB3 控制器 B</text><text class="s-m" x="682" y="206">PCIe USB3 扩展卡</text>
+  <rect class="s-box2" x="672" y="250" width="196" height="36" rx="6"/>
+  <text class="s-t" x="682" y="273">任意 USB 口（Arduino）</text>
+  <text class="s-m" x="676" y="306">录像存到 SSD（例如 D 盘）</text>
+
+  <!-- Arduino -->
+  <rect class="s-board" x="360" y="384" width="190" height="124" rx="8"/>
+  <text class="s-bt" x="368" y="406">D9</text><text class="s-bt" x="368" y="426">D10</text><text class="s-bt" x="368" y="446">D11</text><text class="s-bt" x="368" y="466">D12</text><text class="s-bt" x="368" y="496">GND</text>
+  <text class="s-btb" x="420" y="426">Arduino UNO</text>
+  <text class="s-bt" x="420" y="446">sync_trigger.ino</text>
+  <text class="s-bt" x="420" y="466">4 个脚同时输出</text>
+
+  <!-- IR lamps -->
+  <rect class="s-box" x="660" y="390" width="220" height="118" rx="10"/>
+  <text class="s-tb" x="676" y="416">940 nm 红外灯 ×2</text>
+  <text class="s-t" x="676" y="440">12 V 电源适配器 → 插座</text>
+  <text class="s-m" x="676" y="462">常亮。不接电脑，不接 Arduino</text>
+  <circle class="f-ir" cx="852" cy="410" r="7"/>
+
+  <!-- legend -->
+  <g transform="translate(40 540)">
+    <path class="w-usb" d="M0 0 H34"/><text class="s-m" x="42" y="4">USB3 数据线（相机）</text>
+    <path class="w-y" d="M190 0 H224"/><text class="s-m" x="232" y="4">黄线：Line0+ 触发输入</text>
+    <path class="w-g" d="M390 0 H424"/><text class="s-m" x="432" y="4">绿线：Line0− 输入地</text>
+    <path class="w-gray" d="M570 0 H604"/><text class="s-m" x="612" y="4">USB（Arduino）</text>
+    <circle class="f-g" cx="740" cy="0" r="4"/><text class="s-m" x="750" y="4">圆点 = 相连</text>
+  </g>
+</svg>
+</div>
+<figcaption>图 1　系统连接。线交叉的地方，只有画了圆点才相连。4 台相机时，把相机分到 2 个 USB3 控制器上（每个控制器 2 台）。只有 2 台相机时，两台都接控制器 A 即可。</figcaption>
+</figure>
+
+<h3>USB 带宽</h3>
+<p>1 台相机以 1440×1080、60 fps、8 位输出时，数据量约 93 MB/s。4 台相机约 373 MB/s。1 个 USB3（5 Gbps）控制器实际约能传 350–400 MB/s，所以 4 台相机要分到 2 个控制器上。</p>
+<div class="callout warn"><span class="t">注意</span>
+<p>前面板的 USB 口、显示器上的 USB 口、USB HUB 都不适合接相机。请用主板后面板的蓝色 USB3 口或 PCIe USB3 扩展卡。</p></div>
+</section>
+
+<!-- 3 ─────────────────────────────────────────── -->
+<section id="mount">
+<h2><span class="n">3</span>相机、镜头和红外灯</h2>
+
+<h3>3.1 装镜头</h3>
+<ol class="steps">
+  <li>取下相机前面的防尘盖和镜头后盖。</li>
+  <li>把镜头顺时针拧到相机的 C 口上，拧到底，不要用力过大。</li>
+  <li>把光圈环先放在 F4 左右。光圈越小（F 数越大），景深越大，但画面越暗。</li>
+  <li>先不要锁紧对焦环和光圈环的螺丝。在软件里看到画面后再调（见 <a href="#freerun">8.2</a>）。</li>
+</ol>
+
+<h3>3.2 相机高度</h3>
+<p>相机在烧杯正上方，镜头向下。下表的高度是从镜头前端到烧杯底面的距离，按黑白相机 MV-CS016-10UM（感光面约 4.97 × 3.73 mm）计算。视野短边比烧杯直径多 2–3 cm，留出余量。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>烧杯直径</th><th>需要的视野（短边）</th><th class="num">8 mm 镜头高度</th><th class="num">6 mm 镜头高度（参考）</th></tr></thead>
+<tbody>
+<tr><td>15 cm</td><td>约 17 cm</td><td class="num">约 37 cm</td><td class="num">约 27 cm</td></tr>
+<tr><td>20 cm</td><td>约 23 cm</td><td class="num">约 49 cm</td><td class="num">约 37 cm</td></tr>
+</tbody></table></div>
+<p class="small muted">计算方法：高度 ≈ 镜头焦距 × 视野短边 ÷ 3.73 mm。彩色相机的感光面可能不同，最后以网页预览为准：烧杯底面完整地在画面中，四周留一点余量。</p>
+<ul>
+  <li>用三脚架的横臂，让相机在烧杯中心的正上方。镜头光轴应垂直于底面。</li>
+  <li>锁紧所有螺丝。<strong>相机移动后，标定和画面位置都要重新做。</strong></li>
+  <li>烧杯下面放哑光底板，不要用会反光的桌面。</li>
+</ul>
+
+<h3>3.3 红外灯</h3>
+<figure>
+<div class="svgwrap">
+<svg viewBox="0 0 800 390" role="img" aria-label="侧视图：相机在烧杯正上方，两盏红外灯在两侧斜向照射，灯前有柔光材料，烧杯下有哑光底板">
+  <!-- floor -->
+  <rect class="s-box2" x="60" y="330" width="680" height="16" rx="3"/>
+  <text class="s-m" x="500" y="368">哑光底板（白鼠用深色，黑鼠用浅色）</text>
+  <!-- tripod -->
+  <path class="w-dim" d="M150 330 V56 H372" style="stroke-width:5;stroke:var(--svg-line)"/>
+  <path class="w-dim" d="M150 330 L110 346 M150 330 L190 346" style="stroke-width:3;stroke:var(--svg-line)"/>
+  <text class="s-m" x="66" y="200">三脚架</text><text class="s-m" x="66" y="216">+ 横臂</text>
+  <!-- camera -->
+  <rect class="s-box" x="370" y="36" width="60" height="44" rx="5"/>
+  <rect class="s-box2" x="384" y="80" width="32" height="28" rx="3"/>
+  <text class="s-t" x="440" y="58">相机</text><text class="s-m" x="440" y="98">8 mm 镜头</text>
+  <!-- FOV -->
+  <path class="w-fov" d="M392 108 L296 330 M408 108 L504 330"/>
+  <!-- beaker -->
+  <path d="M320 216 V328 H480 V216" style="fill:none;stroke:var(--wire-usb);stroke-width:2.5;opacity:.75"/>
+  <text class="s-m" x="300" y="368">玻璃烧杯 Ø 15 / 20 cm</text>
+  <ellipse class="f-gray" cx="398" cy="319" rx="26" ry="9"/>
+  <text class="s-m" x="372" y="304">小鼠</text>
+  <!-- height dimension -->
+  <path class="w-dim" d="M680 108 V328 M672 108 H688 M672 328 H688"/><path class="w-fov" d="M418 108 H672"/>
+  <text class="s-t" x="694" y="214">H：镜头前端</text><text class="s-t" x="694" y="234">到烧杯底面</text>
+  <!-- lamps -->
+  <g transform="translate(222 142) rotate(-35)"><rect class="s-box" x="-30" y="-14" width="60" height="28" rx="5"/><rect class="f-ir" x="-24" y="14" width="48" height="5"/></g>
+  <g transform="translate(240 168) rotate(-35)"><rect style="fill:var(--svg-box2);stroke:var(--svg-muted);stroke-dasharray:3 3" x="-36" y="-3" width="72" height="6"/></g>
+  <path class="w-ir" d="M262 184 L352 300 M240 196 L330 316 M278 172 L380 286"/>
+  <g transform="translate(578 142) rotate(35)"><rect class="s-box" x="-30" y="-14" width="60" height="28" rx="5"/><rect class="f-ir" x="-24" y="14" width="48" height="5"/></g>
+  <g transform="translate(560 168) rotate(35)"><rect style="fill:var(--svg-box2);stroke:var(--svg-muted);stroke-dasharray:3 3" x="-36" y="-3" width="72" height="6"/></g>
+  <path class="w-ir" d="M538 184 L448 300 M560 196 L470 316 M522 172 L420 286"/>
+  <text class="s-t" x="190" y="92">940 nm 红外灯</text><text class="s-m" x="190" y="108">灯前加柔光纸</text>
+  <text class="s-t" x="560" y="92">940 nm 红外灯</text>
+  <!-- angle -->
+  <path class="w-dim" d="M222 142 V250" style="stroke-dasharray:3 3"/>
+  <text class="s-m" x="160" y="262">与竖直方向 30–45°</text>
+</svg>
+</div>
+<figcaption>图 2　侧视图。相机在正上方；2 盏红外灯在两侧斜着照，灯前加柔光材料。示意图，不按比例。</figcaption>
+</figure>
+<ul>
+  <li>用 2 盏灯，放在烧杯两侧，和竖直方向成 30–45°。两侧照明可以减少小鼠的影子。</li>
+  <li>在灯前放柔光纸或磨砂亚克力板，让光更均匀。</li>
+  <li>检查烧杯杯壁上的亮斑。如果预览中有亮斑，把灯放低一点或向外移，直到亮斑离开杯底区域。</li>
+  <li>录制时红外灯一直开着。不要用定时开关。</li>
+  <li>红外光会改变对焦位置。<strong>换成红外照明后，在红外光下重新对焦。</strong></li>
+</ul>
+<div class="callout warn"><span class="t">注意</span>
+<p>940 nm 光人眼看不见，但灯珠功率可能很大。不要近距离直视点亮的灯珠。灯会发热，不要用纸直接盖住灯面。</p>
+<p>开始动物实验前，请和动物房或兽医确认长时间红外照明可以使用。</p></div>
+
+<h3>3.4 滤光片（可选）</h3>
+<p>940 nm 带通滤光片可以挡住室内的可见光。它不是必需的：如果录制时关闭室内灯，或者室内光对画面影响很小，可以不装。需要时，买 M35.5×0.5 螺纹的 940 nm 带通滤光片，拧在镜头前端。</p>
+</section>
+
+<!-- 4 ─────────────────────────────────────────── -->
+<section id="wiring">
+<h2><span class="n">4</span>触发接线（Arduino → 相机）</h2>
+<p>每台相机用 1 根 6 针 I/O 线。每根线只用 2 根芯：<strong>黄线</strong>（Line0+，触发输入）接 Arduino 的 D9–D12，<strong>绿线</strong>（Line0−，输入地）接 Arduino 的 GND。其余的线都不接。</p>
+
+<div class="callout danger"><span class="t">警告：先确认线的颜色</span>
+<p>下表的颜色来自 MV-ACC-01-2101 的常见版本。不同批次的线颜色可能不同。接线前，请对照线缆标签或相机说明书（“I/O 接口定义”一节），并用万用表通断档确认：哪根线通到插头的第 2 针，哪根通到第 5 针。</p>
+<p><strong>橙线（第 1 针）是相机电源输入。绝对不要把它接到 Arduino 的任何引脚。</strong></p></div>
+
+<div class="tablewrap"><table>
+<thead><tr><th class="num">针</th><th>信号</th><th>线色（以说明书为准）</th><th>接到</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>相机电源输入（DC）</td><td>橙</td><td><strong>不接</strong>，剪短并单独绝缘</td></tr>
+<tr><td class="num">2</td><td>Line0+（光耦隔离输入）</td><td>黄</td><td>Arduino D9 / D10 / D11 / D12（每台相机 1 个脚）</td></tr>
+<tr><td class="num">3</td><td>Line2（可配置 I/O）</td><td>以说明书为准</td><td>不接，单独绝缘</td></tr>
+<tr><td class="num">4</td><td>Line1+（光耦隔离输出）</td><td>以说明书为准</td><td>不接，单独绝缘</td></tr>
+<tr><td class="num">5</td><td>Line0− / Line1−（光耦地）</td><td>绿</td><td>Arduino GND（4 台相机的绿线合在一起）</td></tr>
+<tr><td class="num">6</td><td>GND</td><td>以说明书为准</td><td>不接，单独绝缘</td></tr>
+</tbody></table></div>
+
+<figure>
+<div class="svgwrap">
+<svg viewBox="0 0 800 470" role="img" aria-label="触发接线图：4 根相机 I/O 线的黄线分别接 Arduino D9、D10、D11、D12，绿线合在一起接 GND，橙线不接">
+  <!-- yellow wires -->
+  <path class="w-y" d="M200 48 H470 V250 H555"/>
+  <path class="w-y" d="M200 143 H450 V270 H555"/>
+  <path class="w-y" d="M200 238 H430 V290 H555"/>
+  <path class="w-y" d="M200 333 H410 V310 H555"/>
+  <!-- green wires + bus -->
+  <path class="w-g" d="M200 82 H360"/><path class="w-g" d="M200 177 H360"/><path class="w-g" d="M200 272 H360"/><path class="w-g" d="M200 367 H360"/>
+  <path class="w-g" d="M360 82 V367"/><path class="w-g" d="M360 350 H555"/>
+  <circle class="f-g" cx="360" cy="177" r="4.5"/><circle class="f-g" cx="360" cy="272" r="4.5"/><circle class="f-g" cx="360" cy="350" r="4.5"/>
+  <text class="s-m" x="372" y="392">4 根绿线合到 1 个 GND</text>
+  <text class="s-m" x="372" y="408">（面包板或接线端子）</text>
+  <!-- orange stubs -->
+  <path class="w-o" d="M200 65 H250"/><path class="w-o" d="M200 160 H250"/><path class="w-o" d="M200 255 H250"/><path class="w-o" d="M200 350 H250"/>
+  <rect class="f-line" x="250" y="59" width="14" height="12" rx="2"/><rect class="f-line" x="250" y="154" width="14" height="12" rx="2"/><rect class="f-line" x="250" y="249" width="14" height="12" rx="2"/><rect class="f-line" x="250" y="344" width="14" height="12" rx="2"/>
+  <text class="s-m" x="270" y="69">不接</text><text class="s-m" x="270" y="164">不接</text><text class="s-m" x="270" y="259">不接</text><text class="s-m" x="270" y="354">不接</text>
+  <!-- cable ends -->
+  <g>
+    <rect class="s-box" x="30" y="30" width="170" height="70" rx="8"/><text class="s-tb" x="42" y="54">cam-1 I/O 线</text>
+    <text class="s-m" x="42" y="74">黄 2 · 橙 1 · 绿 5</text><text class="s-m" x="42" y="90">其余 3 根不接</text>
+    <rect class="s-box" x="30" y="125" width="170" height="70" rx="8"/><text class="s-tb" x="42" y="149">cam-2 I/O 线</text>
+    <text class="s-m" x="42" y="169">黄 2 · 橙 1 · 绿 5</text><text class="s-m" x="42" y="185">其余 3 根不接</text>
+    <rect class="s-box" x="30" y="220" width="170" height="70" rx="8"/><text class="s-tb" x="42" y="244">cam-3 I/O 线</text>
+    <text class="s-m" x="42" y="264">黄 2 · 橙 1 · 绿 5</text><text class="s-m" x="42" y="280">其余 3 根不接</text>
+    <rect class="s-box" x="30" y="315" width="170" height="70" rx="8"/><text class="s-tb" x="42" y="339">cam-4 I/O 线</text>
+    <text class="s-m" x="42" y="359">黄 2 · 橙 1 · 绿 5</text><text class="s-m" x="42" y="375">其余 3 根不接</text>
+  </g>
+  <!-- Arduino board (drawn rotated: digital header on the left) -->
+  <rect class="s-board" x="545" y="36" width="220" height="400" rx="10"/>
+  <g>
+    <rect class="pin" x="555" y="55" width="10" height="10"/><text class="s-bt" x="574" y="64">0 RX</text>
+    <rect class="pin" x="555" y="75" width="10" height="10"/><text class="s-bt" x="574" y="84">1 TX</text>
+    <rect class="pin" x="555" y="95" width="10" height="10"/><text class="s-bt" x="574" y="104">2</text>
+    <rect class="pin" x="555" y="115" width="10" height="10"/><text class="s-bt" x="574" y="124">3</text>
+    <rect class="pin" x="555" y="135" width="10" height="10"/><text class="s-bt" x="574" y="144">4</text>
+    <rect class="pin" x="555" y="155" width="10" height="10"/><text class="s-bt" x="574" y="164">5</text>
+    <rect class="pin" x="555" y="175" width="10" height="10"/><text class="s-bt" x="574" y="184">6</text>
+    <rect class="pin" x="555" y="195" width="10" height="10"/><text class="s-bt" x="574" y="204">7</text>
+    <rect class="pin" x="555" y="225" width="10" height="10"/><text class="s-bt" x="574" y="234">8</text>
+    <rect class="f-y" x="555" y="245" width="10" height="10"/><text class="s-bt" x="574" y="254" style="font-weight:700">9 ← cam-1</text>
+    <rect class="f-y" x="555" y="265" width="10" height="10"/><text class="s-bt" x="574" y="274" style="font-weight:700">10 ← cam-2</text>
+    <rect class="f-y" x="555" y="285" width="10" height="10"/><text class="s-bt" x="574" y="294" style="font-weight:700">11 ← cam-3</text>
+    <rect class="f-y" x="555" y="305" width="10" height="10"/><text class="s-bt" x="574" y="314" style="font-weight:700">12 ← cam-4</text>
+    <rect class="pin" x="555" y="325" width="10" height="10"/><text class="s-bt" x="574" y="334">13（板上 L 灯）</text>
+    <rect class="f-g" x="555" y="345" width="10" height="10"/><text class="s-bt" x="574" y="354" style="font-weight:700">GND ← 绿线</text>
+    <rect class="pin" x="555" y="365" width="10" height="10"/><text class="s-bt" x="574" y="374">AREF</text>
+    <rect class="pin" x="555" y="385" width="10" height="10"/><text class="s-bt" x="574" y="394">SDA</text>
+    <rect class="pin" x="555" y="405" width="10" height="10"/><text class="s-bt" x="574" y="414">SCL</text>
+  </g>
+  <text class="s-btb" x="672" y="120">Arduino</text><text class="s-btb" x="672" y="140">UNO</text>
+  <text class="s-bt" x="672" y="166">数字口</text><text class="s-bt" x="672" y="184">一侧</text>
+  <rect class="s-box2" x="566" y="436" width="44" height="22" rx="3"/><text class="s-m" x="618" y="452">USB → 电脑</text>
+</svg>
+</div>
+<figcaption>图 3　触发接线。Arduino 板转了 90° 画，数字口（D0–D13、GND）在左侧；实物上这排插针在板子的长边上，GND 紧挨着 13 号脚。D9–D12 由程序同时输出，哪台相机接哪个脚不影响同步；建议 cam-1 接 D9、cam-2 接 D10……，方便排查。</figcaption>
+</figure>
+
+<h3>接线步骤</h3>
+<div class="callout warn"><span class="t">注意</span><p>接线前，拔掉所有相机的 USB 线和 Arduino 的 USB 线。</p></div>
+<ol class="steps">
+  <li>对每根 I/O 线，用万用表确认第 2 针和第 5 针对应的线色。</li>
+  <li>把橙线（第 1 针）和其余不用的线剪短，每根单独包好电工胶带或热缩管，互相不能碰到。</li>
+  <li>把 cam-1 的黄线接到 Arduino 的 D9。用杜邦线或接线端子，保证接触牢固。</li>
+  <li>同样，把 cam-2 的黄线接 D10，cam-3 接 D11，cam-4 接 D12。</li>
+  <li>把所有相机的绿线接到同一个面包板横排或接线端子上。</li>
+  <li>用 1 根杜邦线，把这个横排连到 Arduino 的 GND（13 号脚旁边那个）。</li>
+  <li>把每根 I/O 线的 6 针插头插到相机背面的 I/O 口，对准缺口，拧紧锁紧环。</li>
+  <li>用胶带把 Arduino 和接线固定好，防止被拉扯。</li>
+</ol>
+<div class="callout"><span class="t">电气说明</span>
+<p>Arduino 输出 5 V 脉冲，宽 1 ms。相机的 Line0 是光耦隔离输入，可以直接接 5 V 信号，不需要外加电阻。每个 Arduino 引脚只接 1 台相机。</p></div>
+</section>
+
+<!-- 5 ─────────────────────────────────────────── -->
+<section id="pc">
+<h2><span class="n">5</span>电脑设置（Windows）</h2>
+<p>这些设置防止 Windows 为了省电关掉 USB 口或进入睡眠。录制服务在录制时会阻止电脑睡眠，但 USB 省电要手动关闭。</p>
+
+<h3>5.1 电源计划和 USB 选择性暂停</h3>
+<ol class="steps">
+  <li>按 <kbd>Win</kbd>+<kbd>R</kbd>，输入 <code>powercfg.cpl</code>，按回车。</li>
+  <li>选择“高性能”（如果没有，先点“显示附加计划”）。</li>
+  <li>点“更改计划设置”→“更改高级电源设置”。</li>
+  <li>展开“USB 设置”→“USB 选择性暂停设置”，选“已禁用”。点“确定”。</li>
+  <li>打开“设置”→“系统”→“电源”（Windows 10 是“电源和睡眠”），把“接通电源时，电脑进入睡眠状态”设为“从不”。</li>
+</ol>
+<p class="small muted">也可以用命令完成第 4 步（在“命令提示符”中运行）：</p>
+<div class="cmd"><span class="tag">CMD</span><pre>powercfg /SETACVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0
+powercfg /SETACTIVE SCHEME_CURRENT</pre></div>
+
+<h3>5.2 设备管理器中的 USB 节能</h3>
+<ol class="steps">
+  <li>右键“开始”按钮，选择“设备管理器”。</li>
+  <li>展开“通用串行总线控制器”。</li>
+  <li>对每个“USB 根集线器（USB 3.0）”：右键 →“属性”→“电源管理”，取消勾选“允许计算机关闭此设备以节约电源”。</li>
+</ol>
+
+<h3>5.3 硬盘和系统更新</h3>
+<ul>
+  <li>把录像保存到 SSD 上，例如 <span class="path">D:\MouseRecordings</span>。每台相机每小时的数据量估计约 1–4 GB（见 <a href="#files">第 10 节</a>，以实测为准）。</li>
+  <li>在“设置”→“Windows 更新”中设置“使用时段”，或在实验期间暂停更新，防止系统在录制时自动重启。</li>
+</ul>
+</section>
+
+<!-- 6 ─────────────────────────────────────────── -->
+<section id="software">
+<h2><span class="n">6</span>安装软件和驱动（Windows）</h2>
+<p>需要安装 5 个软件：Python、Git、海康 MVS（相机驱动）、Arduino IDE，最后运行本项目的安装脚本。下面的 <code>winget</code> 命令在 Windows 10/11 自带的“命令提示符”或“终端”中运行。如果 winget 不能用，按每一步给出的网址手动下载。</p>
+
+<h3 id="sw-python">6.1 Python 3.12（64 位）</h3>
+<div class="cmd"><span class="tag">CMD</span><pre>winget install -e --id Python.Python.3.12</pre></div>
+<p>手动安装：打开 <a href="https://www.python.org/downloads/windows/">python.org/downloads/windows</a>，下载 “Windows installer (64-bit)”。</p>
+<div class="callout warn"><span class="t">注意</span><p>手动安装时，在安装程序的第一个界面勾选 <strong>“Add python.exe to PATH”</strong>，再点 “Install Now”。必须是 64 位版本（3.9 或更新，推荐 3.11 或 3.12）。</p></div>
+
+<h3 id="sw-git">6.2 Git</h3>
+<div class="cmd"><span class="tag">CMD</span><pre>winget install -e --id Git.Git</pre></div>
+<p>手动安装：<a href="https://git-scm.com/download/win">git-scm.com/download/win</a>，所有选项用默认值。安装后，<strong>关闭并重新打开</strong>命令提示符窗口。</p>
+
+<h3 id="sw-code">6.3 下载代码</h3>
+<p>把代码放在只有英文字母、没有空格的路径下，例如 <span class="path">D:\mouse-project</span>。不要放在“桌面”或带中文的文件夹里。</p>
+<div class="cmd"><span class="tag">CMD</span><pre>cd /d D:\
+git clone https://github.com/erdanzhang/mouse-project.git</pre></div>
+<p class="small muted">没有 D 盘时，把 <code>D:\</code> 换成 <code>C:\</code>。没有 Git 时，也可以在 GitHub 页面点 “Code → Download ZIP”，解压到 <span class="path">D:\mouse-project</span>。用 ZIP 时，以后更新要重新下载。</p>
+
+<h3 id="sw-mvs">6.4 海康机器人 MVS（相机驱动和 SDK）</h3>
+<ol class="steps">
+  <li>打开海康机器人下载中心：<a href="https://www.hikrobotics.com/cn/machinevision/service/download/?module=0">hikrobotics.com → 服务支持 → 下载中心 → 机器视觉</a>。</li>
+  <li>下载 “MVS 客户端” 的 Windows 版本（V4.x）。</li>
+  <li>运行安装程序。<strong>安装路径用默认值</strong>（<span class="path">C:\Program Files (x86)\MVS</span>）。录制服务在这个位置自动找到 MVS 的 Python 接口。</li>
+  <li>在驱动选项中，保持 <strong>USB3 Vision 驱动</strong>为勾选。</li>
+  <li>安装完成后，<strong>重新启动电脑</strong>。</li>
+  <li>用 USB3 线连接 1 台相机，打开 MVS 客户端。</li>
+  <li>在左侧设备列表的 “USB” 下找到相机，双击连接，点“开始采集”按钮，确认能看到画面。</li>
+  <li>在相机属性中确认连接速度是 USB3.0。如果显示 USB2.0，换一个蓝色 USB3 口或换线。</li>
+  <li>对每台相机重复第 6–8 步。</li>
+  <li><strong>关闭 MVS 客户端。</strong>同一时间只有一个程序能打开相机；MVS 开着时，录制服务找不到相机。</li>
+</ol>
+<p class="small muted">如果下载页地址变了：在 hikrobotics.com 搜索 “MVS”，下载最新的 Windows 客户端。</p>
+
+<h3 id="sw-arduino">6.5 Arduino IDE</h3>
+<div class="cmd"><span class="tag">CMD</span><pre>winget install -e --id ArduinoSA.IDE.stable</pre></div>
+<p>手动安装：<a href="https://www.arduino.cc/en/software">arduino.cc/en/software</a>。安装时如果提示安装 USB 驱动，点“安装”。</p>
+<p class="small muted">兼容板（非原装 UNO）常用 CH340 芯片。插上后在设备管理器的“端口 (COM 和 LPT)”中看不到它时，安装 CH340 驱动（WCH 官网的 CH341SER）。</p>
+
+<h3 id="sw-install">6.6 运行安装脚本</h3>
+<ol class="steps">
+  <li>打开文件夹 <span class="path">D:\mouse-project</span>。</li>
+  <li>双击 <code>install_windows.bat</code>。第一次安装需要 1–3 分钟（需要联网）。</li>
+  <li>等窗口显示 <code>Install finished.</code>。</li>
+  <li>检查窗口中的检查结果（见下面的例子）。</li>
+  <li>按任意键关闭窗口。</li>
+</ol>
+<p>检查结果应该类似这样：</p>
+<div class="cmd"><span class="tag">输出示例</span><pre>  OS / arch              Windows / AMD64
+  Python                 3.12.x
+  ffmpeg                 ...\imageio_ffmpeg\binaries\ffmpeg-win-x86_64-v7.1.exe
+  Hikrobot MVS SDK       yes
+  -> recorder encoder    libx264      (有 NVIDIA 显卡并装了完整 ffmpeg 时是 h264_nvenc)</pre></div>
+<ul>
+  <li><strong>Hikrobot MVS SDK</strong> 必须是 <code>yes</code>。如果是 <code>no</code>，见 <a href="#faq-mvs">常见问题</a>。</li>
+  <li>安装脚本同时创建本机配置文件 <span class="path">rig\config\recorder.local.yaml</span>。<strong>以后只改这个文件。</strong></li>
+</ul>
+
+<h3 id="sw-ffmpeg">6.7 可选：用 NVIDIA 显卡编码</h3>
+<p>安装脚本自带一个 ffmpeg，用 CPU 编码（libx264）。4 台相机 60 fps 时 CPU 负担较大。电脑有 NVIDIA 显卡时，安装完整版 ffmpeg，录制服务会自动改用显卡编码（h264_nvenc）：</p>
+<div class="cmd"><span class="tag">CMD</span><pre>winget install -e --id Gyan.FFmpeg</pre></div>
+<p>安装后关闭并重新打开窗口，双击 <code>open_terminal_windows.bat</code>，运行 <code>mouse-rig report</code>，确认 “recorder encoder” 变成 <code>h264_nvenc</code>。</p>
+
+<h3 id="sw-update">6.8 以后更新软件</h3>
+<ol class="steps">
+  <li>关闭录制服务窗口。</li>
+  <li>在 <span class="path">D:\mouse-project</span> 中运行下面的命令。</li>
+  <li>再双击一次 <code>install_windows.bat</code>。</li>
+</ol>
+<div class="cmd"><span class="tag">CMD</span><pre>cd /d D:\mouse-project
+git pull</pre></div>
+<p class="small muted"><span class="path">recorder.local.yaml</span> 不在 Git 中，更新不会改动你的设置。</p>
+</section>
+
+<!-- 7 ─────────────────────────────────────────── -->
+<section id="arduino">
+<h2><span class="n">7</span>上传 Arduino 程序</h2>
+<p>程序文件是 <span class="path">rig\hardware\sync_trigger\sync_trigger.ino</span>。它让 D9–D12 每秒同时输出 60 个脉冲（默认值），板上的 L 灯每秒亮灭切换一次。</p>
+<ol class="steps">
+  <li>用 USB 线把 Arduino 接到录制电脑。</li>
+  <li>打开 Arduino IDE，选择“文件”→“打开”，打开 <span class="path">D:\mouse-project\rig\hardware\sync_trigger\sync_trigger.ino</span>。</li>
+  <li>选择“工具”→“开发板”→“Arduino AVR Boards”→“Arduino Uno”。</li>
+  <li>选择“工具”→“端口”→ 带 “Arduino Uno” 字样的 COM 口（例如 COM3）。</li>
+  <li>点左上角的“上传”按钮（向右的箭头）。等下面显示“上传成功”。</li>
+  <li>检查板上的 L 灯：亮 1 秒、灭 1 秒，一直重复。</li>
+  <li>打开“工具”→“串口监视器”。在右下角把波特率设为 <code>115200</code>，换行方式设为“换行”（New Line）。</li>
+  <li>在输入框中输入 <code>?</code>，按回车。应该看到类似 <code>fps=60 running=yes pulses=12345</code> 的一行。</li>
+  <li><strong>关闭串口监视器</strong>（或关闭 Arduino IDE）。串口监视器开着时，录制服务不能通过 USB 控制 Arduino。</li>
+</ol>
+<div class="tablewrap"><table>
+<thead><tr><th>串口命令</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>1</code>–<code>200</code> 的数字</td><td>设置每秒脉冲数（帧率）</td></tr>
+<tr><td><code>s</code></td><td>停止脉冲</td></tr>
+<tr><td><code>r</code></td><td>恢复脉冲</td></tr>
+<tr><td><code>?</code></td><td>显示状态：<code>fps=… running=… pulses=…</code></td></tr>
+</tbody></table></div>
+<div class="callout tip"><span class="t">帧率自动同步</span>
+<p>Arduino 的 USB 线插在录制电脑上时，录制服务会自动找到它，把它的帧率设成配置文件中的 <code>fps</code>，并在打开相机时让所有相机从同一个脉冲开始计数。所以通常不需要手动输入命令。</p>
+<p>Arduino 每次重新上电后恢复默认的 60 fps。只有不用 USB 连接时（例如 Arduino 用充电器供电），才需要改程序里的 <code>fps = 60</code> 再上传。</p></div>
+</section>
+
+<!-- 8 ─────────────────────────────────────────── -->
+<section id="firstrun">
+<h2><span class="n">8</span>第一次运行</h2>
+
+<h3 id="demo">8.1 演示模式（不接相机）</h3>
+<ol class="steps">
+  <li>双击 <code>start_demo_windows.bat</code>。一个黑色窗口打开，浏览器自动打开 <code>http://127.0.0.1:8765</code>。</li>
+  <li>确认网页上有 2 个“虚拟相机”画面，画面中有一个移动的椭圆（模拟小鼠）。</li>
+  <li>点“开始录制”，等 70 秒，再点“停止录制”，在弹出的确认框中点“确定”。</li>
+  <li>点“打开录像文件夹”，确认有一个以日期时间命名的文件夹，里面有 2 个 <code>clip-…</code> 子文件夹。</li>
+  <li>用 VLC 等播放器打开 <code>cam-1.mp4</code>，确认能播放。</li>
+  <li>关闭黑色窗口，停止服务。</li>
+</ol>
+<figure>
+<img src="img/recorder-ui.jpg" alt="录制网页的截图：顶部是状态和开始录制按钮，下面是每台相机的预览画面、帧率、分辨率和曝光增益设置" width="800" height="625" loading="lazy">
+<figcaption>图 4　录制网页（演示模式，录制中）。实际界面可能有小的差别。</figcaption>
+</figure>
+<div class="tablewrap"><table>
+<thead><tr><th>网页上的项目</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td>开始录制 / 停止录制</td><td>开始或停止一次录制。停止时，当前片段被完整保存。</td></tr>
+<tr><td>重新连接相机</td><td>插拔相机或修改接线后点这个按钮。录制中不能用。</td></tr>
+<tr><td>当前片段</td><td>正在写入的 1 分钟片段的文件夹名。</td></tr>
+<tr><td>编码器</td><td>正在用的视频编码器（libx264 = CPU，h264_nvenc = NVIDIA 显卡）。</td></tr>
+<tr><td>同步</td><td>“自由运行”= 相机各自拍摄，不同步；“Arduino COM3 · 60 fps”= 硬件触发，已通过 USB 找到 Arduino。</td></tr>
+<tr><td>实测 / 设定帧率</td><td>相机实际送来的帧率。低于设定值的 90% 时显示为红色。</td></tr>
+<tr><td>丢帧 队列 / 相机</td><td>“队列”= 编码器来不及处理而丢掉的帧；“相机”= USB 传输中丢失的帧。都应该是 0。</td></tr>
+<tr><td>曝光时间、增益 + 应用</td><td>立刻改变画面亮度，用于调试。<strong>不会保存</strong>，调好后要写进配置文件（见 8.4）。</td></tr>
+</tbody></table></div>
+
+<h3 id="freerun">8.2 真实相机：自由运行模式</h3>
+<p>先不接 Arduino，在自由运行模式（<code>trigger: "free"</code>，安装后的默认值）下检查每台相机的画面。</p>
+<ol class="steps">
+  <li>确认 MVS 客户端已经关闭。</li>
+  <li>把所有相机的 USB3 线插到电脑上（按 <a href="#topology">图 1</a> 分配控制器）。</li>
+  <li>双击 <code>start_recorder_windows.bat</code>。</li>
+  <li>确认网页上每台相机都有画面，状态是“正常”，实测帧率约 60。</li>
+  <li>调光圈和对焦：看着预览，转镜头的对焦环，让杯底的小鼠（或放一张有字的纸）最清楚，然后锁紧螺丝。</li>
+  <li>调曝光：在相机卡片中改“曝光时间 (µs)”，点“应用”。建议 ≤ 4000 µs，快速的挠鼻动作才不会拖影。</li>
+  <li>画面太暗时，按这个顺序处理：先加红外灯亮度或调近灯，再开大光圈，最后才加增益。增益越大，噪声越多，文件也越大。</li>
+  <li>录制 2 分钟，检查录像（见 <a href="#check">8.6</a>）。</li>
+</ol>
+<div class="callout warn"><span class="t">注意</span><p>曝光时间必须小于 1 秒 ÷ 帧率。60 fps 时，曝光必须小于 16 666 µs，实际建议 ≤ 4000 µs。曝光太长时，实测帧率会下降。</p></div>
+
+<h3 id="order">8.3 固定相机编号（cam-1 … cam-4）</h3>
+<p>默认的编号顺序取决于电脑找到相机的顺序，可能每次不同。按序列号固定顺序：</p>
+<ol class="steps">
+  <li>双击 <code>open_terminal_windows.bat</code>，打开一个命令窗口。</li>
+  <li>运行下面的命令，记下每台相机的 <code>serial=</code> 序列号。</li>
+  <li>用记事本打开 <span class="path">D:\mouse-project\rig\config\recorder.local.yaml</span>。</li>
+  <li>把序列号按想要的顺序写进 <code>order</code>（见下面的例子），保存。</li>
+  <li>关闭录制服务窗口，再双击 <code>start_recorder_windows.bat</code>，确认编号正确。</li>
+</ol>
+<div class="cmd"><span class="tag">CMD</span><pre>mouse-rig cameras</pre></div>
+<p class="small muted">提示：用手挡住一台相机的镜头，在网页上看是哪个画面变黑，就知道它是哪个编号。可以在相机外壳上贴标签。</p>
+
+<h3 id="save">8.4 把调好的参数写进配置文件</h3>
+<p>网页上改的曝光和增益只在本次运行中有效。调好后，写进 <span class="path">recorder.local.yaml</span>：</p>
+<div class="cmd"><span class="tag">YAML · recorder.local.yaml（示例）</span><pre>recording:
+  output_dir: D:/MouseRecordings
+
+cameras:
+  order: ["DA1234567", "DA7654321", "DA1111111", "DA2222222"]
+  default:
+    fps: 60
+    exposure_us: 4000
+    gain_db: 0
+    trigger: "free"
+  overrides:
+    DA1234567: {label: "黑白-左", exposure_us: 3000, gain_db: 2}
+    DA7654321: {label: "黑白-右", exposure_us: 3000}</pre></div>
+<div class="callout warn"><span class="t">修改配置文件时注意</span>
+<ul>
+  <li>序列号是示例，换成 <code>mouse-rig cameras</code> 显示的真实序列号。</li>
+  <li>只改需要改的行，保留文件中的其他内容。</li>
+  <li>缩进用空格，不要用 Tab。冒号后面要有 1 个空格。</li>
+  <li><code>trigger</code> 的值要加英文引号：<code>"free"</code> 或 <code>"line0"</code>。</li>
+  <li>Windows 路径用正斜杠：<code>D:/MouseRecordings</code>。</li>
+  <li>保存后，关闭并重新启动录制服务，修改才生效。</li>
+</ul></div>
+
+<h3 id="trigger">8.5 切换到触发模式（多相机同步）</h3>
+<p>先完成 <a href="#arduino">第 7 节</a>（上传程序）和 <a href="#wiring">第 4 节</a>（接线）。</p>
+<ol class="steps">
+  <li>确认 Arduino 的 USB 线插在录制电脑上，Arduino IDE 的串口监视器已关闭。</li>
+  <li>在 <span class="path">recorder.local.yaml</span> 中，把 <code>trigger: "free"</code> 改成 <code>trigger: "line0"</code>，保存。</li>
+  <li>关闭录制服务窗口，再双击 <code>start_recorder_windows.bat</code>。</li>
+  <li>在网页顶部的“同步”一格，确认显示 <code>Arduino COM… · 60 fps</code>。</li>
+  <li>确认每台相机的状态是“正常”，帧率一格显示“… / 触发”，实测帧率约 60。</li>
+  <li>测试触发：拔掉 Arduino 的 USB 线。所有相机的画面应该停住，几秒后显示“等待画面”。</li>
+  <li>插回 Arduino 的 USB 线，点“重新连接相机”。画面应该恢复。</li>
+  <li>录制 3 分钟，然后检查（见 8.6）。</li>
+</ol>
+<p class="small muted">第 6 步说明相机确实由 Arduino 触发。如果拔掉 Arduino 后画面还在动，说明相机还在自由运行，检查 <code>trigger</code> 的值和接线。</p>
+
+<h3 id="check">8.6 检查一次录制</h3>
+<ol class="steps">
+  <li>双击 <code>open_terminal_windows.bat</code>。</li>
+  <li>运行 <code>mouse-rig check</code>。它检查最新的一次录制。</li>
+  <li>确认每个片段最后一列都是 <code>yes</code>。</li>
+</ol>
+<div class="cmd"><span class="tag">CMD</span><pre>mouse-rig check
+mouse-rig check --decode</pre></div>
+<p>第二个命令还会解码每个视频并数帧，比较慢。输出示例（触发模式，2 台相机）：</p>
+<div class="cmd"><span class="tag">输出示例</span><pre>sync    : hardware trigger (Line0)  aligned by Arduino gate over USB serial (exact)  frames/clip 3600 ...
+cam-1   : serial DA1234567  1440x1080  measured 60.0 fps  dropped(queue) 0  lost(camera) 0  filled 0
+cam-2   : serial DA7654321  1440x1080  measured 60.0 fps  dropped(queue) 0  lost(camera) 0  filled 0
+
+clip                      cam-1       cam-2       same?
+clip-2026-10-20-143005    3600        3600        yes
+clip-2026-10-20-143105    3600        3600        yes
+clip-2026-10-20-143205    1214        1214        yes</pre></div>
+<ul>
+  <li>完整的片段应该有 60 秒 × 60 fps = 3600 帧。最后一个片段较短，是正常的。</li>
+  <li>触发模式：每个片段中所有相机的帧数必须相同。</li>
+  <li>自由运行模式：相机之间差 1–2 帧是正常的。</li>
+  <li><code>dropped</code>、<code>lost</code>、<code>filled</code> 应该是 0。不是 0 时，见 <a href="#faq">常见问题</a>。</li>
+</ul>
+</section>
+
+<!-- 9 ─────────────────────────────────────────── -->
+<section id="daily">
+<h2><span class="n">9</span>日常录制流程</h2>
+<ol class="steps">
+  <li>打开红外灯电源。</li>
+  <li>确认 Arduino 的 L 灯在闪（触发模式）。</li>
+  <li>双击 <code>start_recorder_windows.bat</code>。</li>
+  <li>在网页上检查每台相机的画面、帧率和“同步”一格。</li>
+  <li>放入小鼠，点“开始录制”。</li>
+  <li>实验结束时，点“停止录制”。</li>
+  <li>运行 <code>mouse-rig check</code>，确认全部是 <code>yes</code>。</li>
+  <li>把录像文件夹复制到备份硬盘。</li>
+</ol>
+<div class="callout"><span class="t">录制时不要关闭黑色的服务窗口</span>
+<p>关闭服务窗口会停止录制。正常停止时（关闭窗口或按 <kbd>Ctrl</kbd>+<kbd>C</kbd>），当前片段会被保存。即使程序意外退出，已写入的 MP4 也能播放。</p></div>
+</section>
+
+<!-- 10 ─────────────────────────────────────────── -->
+<section id="files">
+<h2><span class="n">10</span>录像文件说明</h2>
+<p>每次录制（一个“会话”）生成一个文件夹。会话中每 1 分钟生成一个片段文件夹，每台相机在每个片段中有一个视频和一个帧时间表。</p>
+<div class="tree">D:\MouseRecordings\
+└── 2026-10-20-143005\                  <span class="c">← 一次录制（开始时间）</span>
+    ├── session.json                    <span class="c">← 设置、相机序列号和编号、统计数字</span>
+    ├── logs\ffmpeg-cam-1.log           <span class="c">← 编码器日志（排查问题用）</span>
+    ├── clip-2026-10-20-143005\         <span class="c">← 第 1 分钟</span>
+    │   ├── cam-1.mp4
+    │   ├── cam-1.frames.csv
+    │   ├── cam-2.mp4
+    │   └── cam-2.frames.csv
+    ├── clip-2026-10-20-143105\         <span class="c">← 第 2 分钟</span>
+    └── …</div>
+
+<h3>视频格式</h3>
+<ul>
+  <li>MP4 容器，H.264 编码，YUV 4:2:0，每秒 1 个关键帧。</li>
+  <li>MP4 是分段式（fragmented）的：程序意外退出时，已写入的部分也能播放。</li>
+  <li>黑白相机的视频也是普通的 H.264，任何播放器都能打开。推荐用 VLC 播放。</li>
+  <li>文件大小由配置中的 <code>quality</code> 决定（<code>high</code> / <code>balanced</code> / <code>small</code>）。</li>
+</ul>
+<p><strong>数据量估计：</strong>每台相机每小时约 1–4 GB（<code>balanced</code>，1440×1080，60 fps）。这是估计值，和画面噪声、增益有关。第一次实测后，用 session.json 中的 <code>size_mb</code> 计算真实值。</p>
+
+<h3>frames.csv（每帧一行）</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>列</th><th>含义</th></tr></thead>
+<tbody>
+<tr><td><code>frame_in_clip</code></td><td>在本片段视频中的帧号（从 0 开始），和视频的第几帧一一对应</td></tr>
+<tr><td><code>frame_in_session</code></td><td>在整个会话中的帧号</td></tr>
+<tr><td><code>host_time_unix</code></td><td>这一帧到达电脑的时间（Unix 秒，带小数）</td></tr>
+<tr><td><code>host_time_local</code></td><td>同上，本地时间，精确到毫秒</td></tr>
+<tr><td><code>camera_frame_id</code></td><td>相机自己的帧计数</td></tr>
+<tr><td><code>camera_timestamp</code></td><td>相机自己的时间戳（相机时钟单位）</td></tr>
+<tr><td><code>trigger_index</code></td><td>触发模式：Arduino 脉冲编号。所有相机中相同编号的帧是同一时刻拍的</td></tr>
+<tr><td><code>filled</code></td><td>1 = 这台相机丢了这一帧，视频中用上一帧代替，保证所有相机的帧号对齐</td></tr>
+</tbody></table></div>
+<div class="callout"><span class="t">多相机对齐</span>
+<p>触发模式下，同一片段中所有相机的第 i 帧是同一个 Arduino 脉冲拍下的。分析多视角数据时，直接按帧号对齐即可。</p></div>
+</section>
+
+<!-- 11 ─────────────────────────────────────────── -->
+<section id="config">
+<h2><span class="n">11</span>配置参考</h2>
+<p>配置文件：<span class="path">rig\config\recorder.local.yaml</span>（本机设置）。模板 <span class="path">recorder.yaml</span> 中每一项都有中文注释。修改后重新启动录制服务。</p>
+<div class="tablewrap"><table>
+<thead><tr><th>项目</th><th>默认值</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td><code>recording.output_dir</code></td><td><code>~/MouseRecordings</code></td><td>录像根目录。Windows 建议 <code>D:/MouseRecordings</code></td></tr>
+<tr><td><code>recording.clip_seconds</code></td><td><code>60</code></td><td>每个片段的秒数</td></tr>
+<tr><td><code>recording.quality</code></td><td><code>balanced</code></td><td><code>high</code> 更清晰、文件更大；<code>small</code> 文件更小</td></tr>
+<tr><td><code>recording.codec</code></td><td><code>h264</code></td><td><code>h265</code> 文件更小，但老软件可能打不开</td></tr>
+<tr><td><code>recording.encoder</code></td><td><code>auto</code></td><td>自动选择：NVIDIA → <code>h264_nvenc</code>，Mac → <code>h264_videotoolbox</code>，否则 <code>libx264</code></td></tr>
+<tr><td><code>recording.x264_preset</code></td><td><code>veryfast</code></td><td>只对 CPU 编码有效。CPU 跟不上时改成 <code>superfast</code></td></tr>
+<tr><td><code>recording.min_free_gb</code></td><td><code>10</code></td><td>磁盘剩余空间低于这个值（GB）时自动停止录制</td></tr>
+<tr><td><code>recording.max_minutes</code></td><td><code>0</code></td><td>单次录制最长分钟数；0 = 不限制</td></tr>
+<tr><td><code>cameras.backends</code></td><td><code>[mvs]</code></td><td>相机类型：<code>mvs</code> = 海康；<code>opencv</code> = 普通 USB 摄像头</td></tr>
+<tr><td><code>cameras.arduino_port</code></td><td><code>auto</code></td><td>Arduino 串口。<code>auto</code> = 自动查找；也可以写 <code>"COM3"</code>；<code>none</code> = 不用</td></tr>
+<tr><td><code>cameras.order</code></td><td><code>[]</code></td><td>按序列号固定 cam-1、cam-2 …… 的顺序</td></tr>
+<tr><td><code>cameras.default.fps</code></td><td><code>60</code></td><td>帧率。触发模式下，录制服务把它发给 Arduino</td></tr>
+<tr><td><code>cameras.default.exposure_us</code></td><td><code>4000</code></td><td>曝光时间（微秒），必须小于 1 秒 ÷ 帧率</td></tr>
+<tr><td><code>cameras.default.gain_db</code></td><td><code>0</code></td><td>增益（dB）</td></tr>
+<tr><td><code>cameras.default.trigger</code></td><td><code>"free"</code></td><td><code>"free"</code> = 自由运行；<code>"line0"</code> = Arduino 硬件触发</td></tr>
+<tr><td><code>cameras.overrides</code></td><td><code>{}</code></td><td>按序列号单独设置某台相机：<code>label</code>、<code>exposure_us</code>、<code>gain_db</code>、<code>enabled: false</code></td></tr>
+<tr><td><code>server.port</code></td><td><code>8765</code></td><td>网页端口。被占用时改成别的数字</td></tr>
+<tr><td><code>server.host</code></td><td><code>127.0.0.1</code></td><td>只有本机能打开网页。改成 <code>0.0.0.0</code> 后，同一局域网的电脑也能打开（Windows 防火墙会询问，选“专用网络”）</td></tr>
+</tbody></table></div>
+
+<h3>命令行工具</h3>
+<p>双击 <code>open_terminal_windows.bat</code> 打开命令窗口后可以使用：</p>
+<div class="tablewrap"><table>
+<thead><tr><th>命令</th><th>作用</th></tr></thead>
+<tbody>
+<tr><td><code>mouse-rig cameras</code></td><td>列出相机、序列号和编号</td></tr>
+<tr><td><code>mouse-rig check</code></td><td>检查最新一次录制；加 <code>--decode</code> 同时数视频帧</td></tr>
+<tr><td><code>mouse-rig report</code></td><td>显示本机情况：Python、ffmpeg、编码器、MVS</td></tr>
+<tr><td><code>mouse-rig serve --demo</code></td><td>演示模式（和 start_demo_windows.bat 相同）</td></tr>
+<tr><td><code>mouse-rig record --seconds 30</code></td><td>不开网页，直接录 30 秒（测试用）</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- 12 ─────────────────────────────────────────── -->
+<section id="faq">
+<h2><span class="n">12</span>常见问题</h2>
+
+<h3>安装和启动</h3>
+<details id="faq-mvs"><summary>report 显示 “Hikrobot MVS SDK no”</summary>
+<ol>
+  <li>确认 MVS 已安装，并且安装后重启过电脑。</li>
+  <li>确认 Python 是 64 位：运行 <code>py -3 -c "import struct; print(struct.calcsize('P')*8)"</code>，结果应该是 <code>64</code>。</li>
+  <li>如果 MVS 没有装在默认位置，找到它的 <code>MvImport</code> 文件夹（在 MVS 安装目录的 <span class="path">Development\Samples\Python\MvImport</span>），把路径写进配置：<code>mvs_python_path: "C:/Program Files (x86)/MVS/Development/Samples/Python/MvImport"</code>。</li>
+</ol></details>
+<details><summary>双击 .bat 后窗口一闪就关了</summary>
+<p>在 <span class="path">D:\mouse-project</span> 文件夹的地址栏输入 <code>cmd</code> 按回车，在打开的窗口中输入 <code>install_windows.bat</code> 或 <code>start_recorder_windows.bat</code> 运行，窗口会保留错误信息。</p></details>
+<details><summary>install_windows.bat 显示 “Python was not found” 或 “32-bit”</summary>
+<p>按 <a href="#sw-python">6.1</a> 重新安装 64 位 Python，并勾选 “Add python.exe to PATH”。如果 Windows 打开了 Microsoft Store，在“设置”→“应用”→“高级应用设置”→“应用执行别名”中关闭两个 “python” 别名。</p></details>
+<details><summary>浏览器没有自动打开，或网页打不开</summary>
+<p>手动在浏览器中打开 <code>http://127.0.0.1:8765</code>。如果服务窗口显示端口被占用，在配置中把 <code>server.port</code> 改成 8766 等数字。</p></details>
+
+<h3>相机</h3>
+<details><summary>网页显示“没有找到相机”</summary>
+<ol>
+  <li>关闭 MVS 客户端和其他可能打开相机的程序。</li>
+  <li>确认相机 USB 线插在蓝色 USB3 口上，相机背面的指示灯亮。</li>
+  <li>点“重新连接相机”。</li>
+  <li>运行 <code>mouse-rig cameras</code>，查看错误信息。</li>
+  <li>打开 MVS 客户端，确认它能看到相机；然后再关闭 MVS。</li>
+</ol></details>
+<details><summary>画面全黑</summary>
+<ul>
+  <li>镜头盖没取下，或光圈环转到了最小。</li>
+  <li>曝光时间太短，或红外灯没开。</li>
+  <li>在红外光下使用了<strong>彩色相机</strong>：彩色相机有红外截止滤光片，看不到 940 nm 光。</li>
+</ul></details>
+<details><summary>画面模糊或有拖影</summary>
+<ul>
+  <li>整体模糊：重新对焦。换成红外照明后要重新对焦。</li>
+  <li>只有运动的部分模糊（拖影）：曝光时间太长。减小 <code>exposure_us</code>，同时加亮红外灯。</li>
+</ul></details>
+<details><summary>实测帧率低于 60</summary>
+<ul>
+  <li>曝光时间超过 1 秒 ÷ 帧率。</li>
+  <li>相机插在 USB2 口或 HUB 上；或者太多相机在同一个 USB3 控制器上。</li>
+  <li>触发模式下：Arduino 没有运行，或帧率设置不同（网页会提示）。</li>
+</ul></details>
+
+<h3>录制</h3>
+<details><summary>“丢帧 队列” 不是 0（编码器跟不上）</summary>
+<ol>
+  <li>有 NVIDIA 显卡时，按 <a href="#sw-ffmpeg">6.7</a> 安装完整版 ffmpeg，用显卡编码。</li>
+  <li>没有显卡时，把 <code>x264_preset</code> 改成 <code>superfast</code>，或把 <code>quality</code> 改成 <code>small</code>。</li>
+  <li>关闭其他占用 CPU 的程序。</li>
+</ol></details>
+<details><summary>“丢帧 相机” 不是 0，或 check 显示 filled</summary>
+<ol>
+  <li>把相机分到不同的 USB3 控制器上（见 <a href="#topology">图 1</a>）。</li>
+  <li>换短一点的、质量好的 USB3 线；拧紧锁紧螺丝。</li>
+  <li>确认已按 <a href="#pc">第 5 节</a> 关闭 USB 省电。</li>
+</ol>
+<p>触发模式下，丢失的帧在视频中用上一帧代替（<code>filled=1</code>），所以各相机的帧号仍然对齐。</p></details>
+<details><summary>触发模式下所有画面都是“等待画面”</summary>
+<ol>
+  <li>确认 Arduino 的 L 灯在闪。不闪时重新上传程序（第 7 节）。</li>
+  <li>确认黄线接在 D9–D12，绿线接在 GND，插头已插紧。</li>
+  <li>用串口监视器发 <code>?</code>，确认 <code>running=yes</code>；然后关闭串口监视器。</li>
+  <li>点“重新连接相机”。</li>
+</ol></details>
+<details><summary>网页提示“没有通过 USB 找到 Arduino”</summary>
+<ul>
+  <li>关闭 Arduino IDE 的串口监视器（它会占用串口）。</li>
+  <li>在设备管理器的“端口 (COM 和 LPT)”中找到 Arduino 的 COM 号，写进配置：<code>arduino_port: "COM3"</code>。</li>
+  <li>兼容板需要安装 CH340 驱动（见 <a href="#sw-arduino">6.5</a>）。</li>
+</ul>
+<p>没有 USB 连接时也能录制，但相机之间的帧对齐改用到达时间估计，精度较低。</p></details>
+<details><summary>check 显示某个片段 “NO”</summary>
+<p>说明这个片段中各相机的帧数不同。触发模式下这不应该发生。请保存 <code>mouse-rig check</code> 的输出、<span class="path">session.json</span> 和 <span class="path">logs</span> 文件夹，用于排查。</p></details>
+<details><summary>录制自动停止了</summary>
+<p>网页上方会显示原因。常见原因：磁盘剩余空间低于 <code>min_free_gb</code>，或达到了 <code>max_minutes</code>。</p></details>
+<details><summary>视频打不开</summary>
+<p>用 VLC 播放器打开。如果 VLC 也打不开，查看 <span class="path">logs\ffmpeg-cam-N.log</span> 中的错误。</p></details>
+</section>
+
+<!-- 13 ─────────────────────────────────────────── -->
+<section id="checklist">
+<h2><span class="n">13</span>硬件首测清单</h2>
+<p>在接好硬件的电脑上第一次测试时，逐项完成并勾选。勾选状态保存在这个浏览器中。</p>
+<div class="progress"><div class="bar"><i id="ckbar"></i></div><span id="cktext">0 / 0</span><button type="button" class="btn-reset" id="ckreset">清空</button></div>
+<ul class="checklist" id="ck">
+  <li><label><input type="checkbox" data-k="mvs"><span class="ck">MVS 客户端能看到每台相机，并显示 USB3.0 连接；看完后已关闭 MVS。</span></label></li>
+  <li><label><input type="checkbox" data-k="report"><span class="ck"><code>install_windows.bat</code> 的检查结果中 “Hikrobot MVS SDK” 是 <code>yes</code>。</span></label></li>
+  <li><label><input type="checkbox" data-k="demo"><span class="ck">演示模式录制 70 秒成功，<code>cam-1.mp4</code> 能播放。</span></label></li>
+  <li><label><input type="checkbox" data-k="preview"><span class="ck">真实相机：网页上每台相机都有画面，实测帧率约 60。</span></label></li>
+  <li><label><input type="checkbox" data-k="focus"><span class="ck">每台相机的光圈、对焦已调好并锁紧；在红外光下重新对焦过。</span></label></li>
+  <li><label><input type="checkbox" data-k="glare"><span class="ck">杯底区域没有红外灯的反光亮斑；小鼠和底板对比清楚。</span></label></li>
+  <li><label><input type="checkbox" data-k="order"><span class="ck">相机顺序（<code>order</code>）、标签、曝光和增益已写进 <code>recorder.local.yaml</code>。</span></label></li>
+  <li><label><input type="checkbox" data-k="free"><span class="ck">自由运行模式录制 2 分钟，<code>mouse-rig check</code> 正常。</span></label></li>
+  <li><label><input type="checkbox" data-k="led"><span class="ck">Arduino 程序已上传：L 灯亮 1 秒灭 1 秒；串口 <code>?</code> 返回 <code>fps=60 running=yes</code>；串口监视器已关闭。</span></label></li>
+  <li><label><input type="checkbox" data-k="wire"><span class="ck">接线已用万用表确认：黄线（第 2 针）→ D9–D12，绿线（第 5 针）→ GND，橙线和其余线没有接并已绝缘。</span></label></li>
+  <li><label><input type="checkbox" data-k="sync"><span class="ck">改成 <code>trigger: "line0"</code> 后，网页“同步”一格显示 Arduino 的 COM 口和 60 fps。</span></label></li>
+  <li><label><input type="checkbox" data-k="unplug"><span class="ck">拔掉 Arduino USB 后，所有画面停住；插回并点“重新连接相机”后恢复。</span></label></li>
+  <li><label><input type="checkbox" data-k="trig3"><span class="ck">触发模式录制 3 分钟，<code>mouse-rig check --decode</code> 每个片段都是 <code>yes</code>，完整片段是 3600 帧。</span></label></li>
+  <li><label><input type="checkbox" data-k="size"><span class="ck">记下每台相机每分钟的文件大小（session.json 的 <code>size_mb</code> ÷ 分钟数 ÷ 相机数）。</span></label></li>
+  <li><label><input type="checkbox" data-k="hour"><span class="ck">连续录制 1 小时：没有丢帧（dropped / lost / filled 都是 0），电脑没有睡眠，磁盘空间正常。</span></label></li>
+</ul>
+<div class="callout tip"><span class="t">测试中遇到问题</span>
+<p>保存这 3 样东西，用于排查：<code>mouse-rig check</code> 的输出、会话文件夹中的 <span class="path">session.json</span>、<span class="path">logs</span> 文件夹。也可以运行 <code>mouse-rig report</code> 并保存输出。</p></div>
+</section>
+
+<!-- 14 ─────────────────────────────────────────── -->
+<section id="mac">
+<h2><span class="n">14</span>在 Mac 上使用</h2>
+<p>录制服务是同一个 Python 程序，在 Windows 和 macOS 上用法相同。但海康 MVS 4.x 没有 macOS 版本，所以 <strong>Mac 不能连接海康相机</strong>。Mac 用于演示、开发和分析录像。</p>
+<ol class="steps">
+  <li>从 <a href="https://www.python.org/downloads/macos/">python.org</a> 安装 Python 3.12。</li>
+  <li>下载代码（<code>git clone https://github.com/erdanzhang/mouse-project.git</code>）。</li>
+  <li>在访达中双击 <code>install_mac.command</code>。如果 macOS 阻止运行，右键 →“打开”。</li>
+  <li>双击 <code>start_demo_mac.command</code>，用虚拟相机试录。</li>
+</ol>
+<div class="tablewrap"><table>
+<thead><tr><th>功能</th><th>Windows</th><th>macOS</th></tr></thead>
+<tbody>
+<tr><td>录制网页、片段切分、检查工具</td><td>支持</td><td>支持</td></tr>
+<tr><td>海康 USB3 相机</td><td>支持（MVS 4.x）</td><td>不支持</td></tr>
+<tr><td>普通 USB 摄像头（<code>backends: [opencv]</code>）</td><td>支持</td><td>支持</td></tr>
+<tr><td>Arduino 触发和 USB 串口</td><td>支持</td><td>支持</td></tr>
+<tr><td>硬件编码</td><td>NVIDIA NVENC / Intel QSV</td><td>VideoToolbox</td></tr>
+<tr><td>脚本</td><td><code>*_windows.bat</code></td><td><code>*_mac.command</code></td></tr>
+</tbody></table></div>
+</section>
+
+<footer class="doc">
+  <p>本指南在 <span class="path">docs/installation-guide.html</span>，和代码一起更新。项目地址：github.com/erdanzhang/mouse-project。个人非商业项目。</p>
+</footer>
+</main>
+</div>
+
+<script>
+(function(){
+  // copy buttons on command blocks
+  document.querySelectorAll(".cmd").forEach(function(box){
+    var pre = box.querySelector("pre");
+    if (!pre) return;
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.textContent = "复制";
+    btn.addEventListener("click", function(){
+      var text = pre.innerText.replace(/\s+$/, "");
+      var done = function(){ btn.textContent = "已复制"; btn.classList.add("done");
+        setTimeout(function(){ btn.textContent = "复制"; btn.classList.remove("done"); }, 1500); };
+      var fallback = function(){
+        var r = document.createRange(); r.selectNodeContents(pre);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        try { if (document.execCommand("copy")) { done(); return; } } catch(e){}
+        btn.textContent = "已选中，按 Ctrl+C";
+      };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, fallback);
+        } else { fallback(); }
+      } catch(e){ fallback(); }
+    });
+    box.appendChild(btn);
+  });
+
+  // checklist with progress, remembered in this browser
+  var KEY = "mouse-project-install-checklist-v1";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#ck input[type=checkbox]"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e){ saved = {}; }
+  function update(){
+    var n = boxes.filter(function(b){ return b.checked; }).length;
+    document.getElementById("cktext").textContent = n + " / " + boxes.length;
+    document.getElementById("ckbar").style.width = (boxes.length ? 100 * n / boxes.length : 0) + "%";
+  }
+  boxes.forEach(function(b){
+    b.checked = !!saved[b.dataset.k];
+    b.addEventListener("change", function(){
+      saved[b.dataset.k] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch(e){}
+      update();
+    });
+  });
+  document.getElementById("ckreset").addEventListener("click", function(){
+    boxes.forEach(function(b){ b.checked = false; }); saved = {};
+    try { localStorage.removeItem(KEY); } catch(e){}
+    update();
+  });
+  update();
+
+  // highlight the current section in the table of contents
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.toc a"));
+  var map = {};
+  links.forEach(function(a){ map[a.getAttribute("href").slice(1)] = a; });
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting) {
+          links.forEach(function(a){ a.classList.remove("active"); });
+          var a = map[en.target.id]; if (a) a.classList.add("active");
+        }
+      });
+    }, {rootMargin: "-10% 0px -80% 0px"});
+    document.querySelectorAll("main section[id]").forEach(function(s){ io.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

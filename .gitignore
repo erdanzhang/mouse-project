@@ -28,6 +28,9 @@ weights/
 *.onnx
 *.pth
 
+# ─── Local settings of each computer ───
+rig/config/recorder.local.yaml
+
 # ─── OS / editor ───
 .DS_Store
 .idea/

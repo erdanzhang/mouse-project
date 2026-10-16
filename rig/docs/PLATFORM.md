@@ -8,6 +8,40 @@ and `import mouse_rig` never pulls in torch or a camera SDK.
 
 Run `mouse-rig report` to see what the current machine supports.
 
+## Recorder service (`mouse-rig serve`)
+
+The recorder is one Python process with a stdlib web server and a browser UI, so it
+runs the same way on Windows and macOS. Only the camera backend and the ffmpeg
+encoder change per platform; both are picked at runtime.
+
+| Piece | Windows (lab PC) | macOS | Linux |
+|---|---|---|---|
+| Web UI, clip writer, `check` | ✅ | ✅ | ✅ |
+| Hikrobot cameras (`backends: [mvs]`) | ✅ MVS 4.x Python wrapper (`MvImport`, ctypes → `MvCameraControl.dll`) | ❌ no MVS 4.x for macOS | ✅ `/opt/MVS` (`libMvCameraControl.so`) |
+| USB webcams (`backends: [opencv]`) | ✅ DirectShow | ✅ AVFoundation | ✅ V4L2 |
+| Demo cameras (`--demo`) | ✅ | ✅ | ✅ |
+| Arduino trigger link (pyserial) | ✅ COMn | ✅ /dev/cu.usbmodem* | ✅ /dev/ttyACM* |
+| Encoder (`encoder: auto`, real test-encode) | `h264_nvenc` → `h264_qsv` → `libx264` | `h264_videotoolbox` → `libx264` | `h264_nvenc` → `h264_qsv` → `libx264` |
+| ffmpeg source | `MOUSE_RIG_FFMPEG` → `PATH` → bundled `imageio-ffmpeg` | same | same |
+| Keep awake while recording | `SetThreadExecutionState` | `caffeinate -i` | — |
+
+**MVS backend** (`cameras/mvs.py`): finds the MVS Python wrapper in the default
+install folder (`C:\Program Files (x86)\MVS\Development\Samples\Python\MvImport`,
+`/opt/MVS/Samples/64/Python/MvImport`), or in `cameras.mvs_python_path` /
+`MVS_PYTHON_PATH`. It needs 64-bit Python. Per camera it sets PixelFormat (Mono8 or
+Bayer 8-bit), exposure, gain, and either free-run (`AcquisitionFrameRate`) or
+`TriggerMode On, TriggerSource Line0, RisingEdge`.
+
+**Sync** (`recorder/sync.py`, `recorder/arduino.py`): with `trigger: "line0"` the
+recorder stops the Arduino over USB serial, opens the cameras, then restarts it, so
+the first pulse is frame 1 in every camera. Each frame gets a shared trigger index;
+clips are cut by index (`clip_seconds × fps` frames), and lost frames are filled
+with the previous image (`filled=1` in `frames.csv`). Without the serial link, the
+offset between camera counters comes from frame arrival times (less robust).
+
+The older `backends/frame_source.GenICamSource` (Harvesters + GenTL `.cti`) below is
+kept for the gate/analysis path; the recorder uses the MVS backend.
+
 | Concern | Interface | macOS (dev) | Windows / Linux + RTX 5070 |
 |---------|-----------|-------------|-----------------------------|
 | Frame source | `backends.frame_source.FrameSource` | `FileSource`, `WebcamSource` | `GenICamSource` (real cameras) |

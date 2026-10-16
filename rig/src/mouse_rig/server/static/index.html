@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小鼠行为录制 · mouse-rig</title>
+<style>
+  :root{
+    --bg:#F3F4F2; --panel:#FFFFFF; --ink:#16191C; --muted:#5F6670; --faint:#8D949B;
+    --line:#DDE0DC; --line2:#C8CCC7;
+    --accent:#1F6F6B; --accent-wash:#E3EFEE;
+    --rec:#C8372D; --rec-wash:#FBE7E5;
+    --ok:#2F7D4F; --ok-wash:#E3F1E8;
+    --warn:#A86A06; --warn-wash:#FBF0DC;
+    --sans:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Segoe UI",system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;cursor:pointer}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .wrap{max-width:1280px;margin:0 auto;padding:18px 22px 60px}
+
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
+  h1 small{font-weight:500;color:var(--faint);font-size:13px;margin-left:8px;font-family:var(--mono)}
+  .state{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;font-weight:600;font-size:14px;background:#ECEDEB;color:var(--muted)}
+  .state .dot{width:9px;height:9px;border-radius:50%;background:currentColor}
+  .state.recording{background:var(--rec-wash);color:var(--rec)}
+  .state.recording .dot{animation:blink 1.2s infinite}
+  @keyframes blink{50%{opacity:.25}}
+  @media (prefers-reduced-motion:reduce){.state.recording .dot{animation:none}}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--line2);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:8px}
+  .btn:hover{border-color:var(--accent)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;padding:10px 22px;font-size:16px}
+  .btn.primary.stop{background:var(--rec);border-color:var(--rec)}
+
+  .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:16px}
+  .strip div{background:var(--panel);padding:10px 14px;min-width:0}
+  .strip dt{font-size:12px;color:var(--faint);margin-bottom:2px}
+  .strip dd{margin:0;font-family:var(--mono);font-size:14px;font-weight:600;overflow-wrap:anywhere;line-height:1.35}
+
+  .alerts{margin-top:14px;display:grid;gap:8px}
+  .alert{border-left:3px solid var(--warn);background:var(--warn-wash);color:#5c3c05;padding:9px 14px;border-radius:0 8px 8px 0;font-size:14px}
+  .alert.err{border-left-color:var(--rec);background:var(--rec-wash);color:#7a1d16}
+
+  h2{font-size:15px;margin:26px 0 10px;color:var(--muted);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
+  .cam{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .cam.recording{border-color:var(--rec)}
+  .camhead{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .camhead b{font-family:var(--mono);font-size:16px}
+  .camhead .meta{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .chip{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+  .chip.ok{background:var(--ok-wash);color:var(--ok)}
+  .chip.waiting{background:var(--warn-wash);color:var(--warn)}
+  .chip.error,.chip.closed{background:var(--rec-wash);color:var(--rec)}
+  .chip.disabled{background:#ECEDEB;color:var(--muted)}
+  .chip.rec{background:var(--rec);color:#fff}
+  .view{position:relative;background:#0D0F11;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}
+  .view img{width:100%;height:100%;object-fit:contain;display:block}
+  .view .none{position:absolute;color:#9aa0a6;font-size:14px;padding:20px;text-align:center}
+  .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line)}
+  .metrics div{background:var(--panel);padding:7px 14px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .metrics span{font-size:12px;color:var(--faint)}
+  .metrics b{font-family:var(--mono);font-size:14px;font-variant-numeric:tabular-nums}
+  .metrics b.bad{color:var(--rec)}
+  .controls{display:flex;gap:10px;align-items:end;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .controls label{font-size:12px;color:var(--muted);display:grid;gap:3px}
+  .controls input{width:110px;padding:6px 8px;border:1px solid var(--line2);border-radius:6px;font:14px var(--mono)}
+  .camerr{padding:8px 14px;font-size:13px;color:var(--rec);border-top:1px solid var(--line);background:var(--rec-wash)}
+  .camwarn{padding:8px 14px;font-size:12.5px;color:#5c3c05;border-top:1px solid var(--line);background:var(--warn-wash)}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px}
+  th{text-align:left;font-weight:600;font-size:12px;color:var(--faint);padding:8px 12px;border-bottom:1px solid var(--line2);background:#FAFBFA}
+  td{padding:8px 12px;border-bottom:1px solid var(--line);font-family:var(--mono);font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:0}
+  .foot{margin-top:28px;color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.8}
+  .toast{position:fixed;right:20px;bottom:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:420px}
+  .toast.show{opacity:1}
+  @media (max-width:1100px){.strip{grid-template-columns:repeat(4,minmax(0,1fr))}.strip>div:last-child{grid-column:span 2}}
+  @media (max-width:560px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>小鼠行为录制<small id="ver"></small></h1>
+    <span class="state" id="state"><span class="dot"></span><span id="stateText">连接中…</span></span>
+    <span class="spacer"></span>
+    <button class="btn" id="btnFolder" title="在文件管理器中打开录像文件夹">打开录像文件夹</button>
+    <button class="btn" id="btnReconnect" title="关闭并重新打开所有相机（录制时不可用）">重新连接相机</button>
+    <button class="btn primary" id="btnRecord" disabled>开始录制</button>
+  </header>
+
+  <dl class="strip">
+    <div><dt>录制时长</dt><dd id="elapsed">00:00:00</dd></div>
+    <div><dt>当前片段</dt><dd id="clip">—</dd></div>
+    <div><dt>本次已录大小</dt><dd id="size">—</dd></div>
+    <div><dt>磁盘剩余</dt><dd id="free">—</dd></div>
+    <div><dt>编码器</dt><dd id="encoder">—</dd></div>
+    <div><dt>片段长度 · 格式</dt><dd id="clipcfg">—</dd></div>
+    <div><dt>同步</dt><dd id="sync">—</dd></div>
+  </dl>
+
+  <div class="alerts" id="alerts"></div>
+
+  <h2>相机</h2>
+  <div class="grid" id="cams"></div>
+
+  <h2>最近的录制</h2>
+  <table>
+    <thead><tr><th>会话文件夹</th><th>时长</th><th>片段数</th><th>相机数</th><th>大小</th><th>状态</th></tr></thead>
+    <tbody id="sessions"><tr><td colspan="6">—</td></tr></tbody>
+  </table>
+
+  <div class="foot" id="foot"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const STATE_TEXT = {ok:"正常", waiting:"等待画面", error:"错误", disabled:"已禁用", closed:"未打开"};
+let last = null, busy = false;
+
+function hms(s){ s = Math.max(0, Math.floor(s||0)); const h=String(Math.floor(s/3600)).padStart(2,"0"), m=String(Math.floor(s%3600/60)).padStart(2,"0"), x=String(s%60).padStart(2,"0"); return `${h}:${m}:${x}`; }
+function esc(t){ return String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"), 3500); }
+
+async function api(path, body){
+  const opt = body === undefined ? {} : {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)};
+  const r = await fetch(path, opt);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+
+function renderCams(st){
+  const host = $("cams");
+  const recState = st.recording.state;
+  const writers = (st.recording.writers) || {};
+  if (!st.cameras.length){
+    host.innerHTML = `<div class="alert err">没有找到相机。请检查：相机 USB 线是否插在蓝色 USB3 口；MVS 客户端是否已关闭；然后点击“重新连接相机”。</div>`;
+    return;
+  }
+  for (const c of st.cameras){
+    let card = document.getElementById("card-"+c.id);
+    if (!card){
+      card = document.createElement("div");
+      card.className = "cam"; card.id = "card-"+c.id;
+      card.innerHTML = `
+        <div class="camhead"><b>${esc(c.id)}</b><span class="meta"></span><span class="chip"></span></div>
+        <div class="view"><img alt="${esc(c.id)} 实时画面"><div class="none">等待画面…</div></div>
+        <div class="metrics">
+          <div><span>实测 / 设定帧率</span><b class="m-fps">—</b></div>
+          <div><span>分辨率</span><b class="m-res">—</b></div>
+          <div><span>本次已录帧</span><b class="m-rec">—</b></div>
+          <div><span>丢帧 队列 / 相机</span><b class="m-drop">—</b></div>
+        </div>
+        <div class="controls">
+          <label>曝光时间 (µs)<input type="number" min="20" step="100" class="in-exp"></label>
+          <label>增益 (dB)<input type="number" min="0" max="24" step="0.5" class="in-gain"></label>
+          <button class="btn btn-apply">应用</button>
+          <span class="meta m-trig" style="color:var(--muted);font-size:12.5px"></span>
+        </div>
+        <div class="camwarn" hidden></div>
+        <div class="camerr" hidden></div>`;
+      host.appendChild(card);
+      const img = card.querySelector("img");
+      const loop = () => { img.src = `/api/preview/${c.id}.jpg?t=${Date.now()}`; };
+      img.onload = () => { card.querySelector(".none").hidden = true; setTimeout(loop, 400); };
+      img.onerror = () => { card.querySelector(".none").hidden = false; setTimeout(loop, 1200); };
+      loop();
+      card.querySelector(".btn-apply").onclick = async () => {
+        const exp = parseFloat(card.querySelector(".in-exp").value), gain = parseFloat(card.querySelector(".in-gain").value);
+        try { const s = await api(`/api/cameras/${c.id}/settings`, {exposure_us: exp, gain_db: gain}); toast(`${c.id}：曝光 ${s.exposure_us} µs，增益 ${s.gain_db} dB`); }
+        catch(e){ toast(`设置失败：${e.message}`); }
+      };
+      card.querySelector(".in-exp").value = c.settings.exposure_us;
+      card.querySelector(".in-gain").value = c.settings.gain_db;
+    }
+    const isRec = recState === "recording" && writers[c.id];
+    card.classList.toggle("recording", !!isRec);
+    card.querySelector(".camhead .meta").textContent = `${c.label ? c.label+" · " : ""}${c.model || c.backend} · SN ${c.serial} · ${c.color ? "彩色" : "黑白"}`;
+    const chip = card.querySelector(".camhead .chip");
+    chip.className = "chip " + (isRec ? "rec" : c.state);
+    chip.textContent = isRec ? "● 录制中" : (STATE_TEXT[c.state] || c.state);
+    const fps = card.querySelector(".m-fps");
+    fps.textContent = `${c.fps.toFixed(1)} / ${c.settings.trigger === "line0" ? "触发" : c.settings.fps}`;
+    fps.classList.toggle("bad", c.state === "ok" && c.settings.trigger !== "line0" && c.fps < c.settings.fps * 0.9);
+    card.querySelector(".m-res").textContent = c.width ? `${c.width}×${c.height}` : "—";
+    const w = writers[c.id];
+    card.querySelector(".m-rec").textContent = w ? w.frames_written.toLocaleString() : "—";
+    const drop = card.querySelector(".m-drop");
+    drop.textContent = `${w ? w.frames_dropped : 0} / ${c.lost_frames}`;
+    drop.classList.toggle("bad", (w && w.frames_dropped > 0) || c.lost_frames > 0);
+    card.querySelector(".m-trig").textContent = c.settings.trigger === "line0" ? "触发模式：Line0（Arduino）" : `自由运行 ${c.settings.fps} fps`;
+    const warn = card.querySelector(".camwarn");
+    const notes = [...(c.warnings || [])];
+    if (c.state === "waiting" && c.settings.trigger === "line0") notes.unshift("没有收到触发信号：请确认 Arduino 已上电并运行同步程序，且黄线接 D9–D12、绿线接 GND。");
+    if (c.fps_mismatch) notes.push(`实测帧率约 ${c.fps.toFixed(1)} fps，但配置文件的 fps 是 ${c.settings.fps}。没有 USB 连接时，请把 Arduino 程序里的 fps 改成和配置文件一样。`);
+    if (w && w.errors && w.errors.length) notes.push(...w.errors);
+    warn.hidden = !notes.length; warn.innerHTML = notes.map(esc).join("<br>");
+    const err = card.querySelector(".camerr");
+    err.hidden = !c.error; err.textContent = c.error || "";
+  }
+}
+
+function render(st){
+  last = st;
+  const a = st.app, r = st.recording;
+  $("ver").textContent = `v${a.version} · ${a.platform}`;
+  const rec = r.state === "recording", stopping = r.state === "stopping";
+  $("state").className = "state" + (rec ? " recording" : "");
+  $("stateText").textContent = rec ? "录制中" : stopping ? "正在停止…" : "待机";
+  const btn = $("btnRecord");
+  btn.textContent = rec ? "停止录制" : "开始录制";
+  btn.classList.toggle("stop", rec);
+  const anyOk = st.cameras.some(c => c.state === "ok" || c.state === "waiting");
+  btn.disabled = busy || stopping || (!rec && (!anyOk || !a.encoder));
+  $("btnReconnect").disabled = busy || rec || stopping;
+  $("elapsed").textContent = hms(r.elapsed_s);
+  const w0 = Object.values(r.writers || {})[0];
+  $("clip").textContent = rec && w0 ? w0.current_clip.replace("clip-","") : (r.name || "—");
+  $("size").textContent = r.size_mb != null ? `${r.size_mb} MB` : "—";
+  $("free").textContent = `${a.free_gb} GB`;
+  $("encoder").textContent = a.encoder || "不可用";
+  $("clipcfg").textContent = `${a.clip_seconds} s · ${a.container} · ${a.codec}`;
+  const sy = a.sync || {mode: "free"};
+  const ard = sy.arduino;
+  $("sync").textContent = sy.mode !== "line0" ? "自由运行（不同步）"
+    : ard ? `Arduino ${ard.port} · ${ard.fps} fps${ard.running === false ? " · 已暂停" : ""}${sy.corrections ? ` · 漏触发修正 ${sy.corrections}` : ""}`
+    : "硬件触发（未连 USB）";
+  const alerts = [];
+  if (sy.mode === "line0" && !ard) alerts.push(["warn", "触发模式：没有通过 USB 找到 Arduino（" + (sy.note || "") + "）。录制可以进行，但相机之间的帧对齐改用到达时间估计。建议把 Arduino 的 USB 线插到这台电脑，并关闭 Arduino IDE 的串口监视器，然后点击“重新连接相机”。"]);
+  if (a.encoder_error) alerts.push(["err", "视频编码器不可用：" + a.encoder_error]);
+  for (const e of a.discovery_errors || []) alerts.push(["err", "查找相机时出错：" + e]);
+  if (r.stop_reason && r.state === "stopped" && r.stop_reason !== "stopped by user") alerts.push(["warn", "录制已自动停止：" + r.stop_reason]);
+  if (a.free_gb < a.min_free_gb * 2) alerts.push(["warn", `磁盘剩余空间不多（${a.free_gb} GB）。低于 ${a.min_free_gb} GB 时录制会自动停止。`]);
+  $("alerts").innerHTML = alerts.map(([k,m]) => `<div class="alert ${k === "err" ? "err" : ""}">${esc(m)}</div>`).join("");
+  renderCams(st);
+  $("foot").innerHTML = `录像文件夹：${esc(a.output_dir)}<br>配置文件：${esc(a.config_path || "内置默认值")}<br>ffmpeg：${esc(a.ffmpeg || "未找到")} · Python ${esc(a.python)} · 相机后端：${esc(a.backends.join(", "))}`;
+}
+
+async function refreshSessions(){
+  try {
+    const rows = await api("/api/sessions");
+    $("sessions").innerHTML = rows.length ? rows.map(s => `<tr><td>${esc(s.name)}</td><td>${s.duration_s != null ? hms(s.duration_s) : "—"}</td><td>${s.clips}</td><td>${s.cameras}</td><td>${s.size_mb != null ? s.size_mb + " MB" : "—"}</td><td>${s.state === "recording" ? "录制中" : s.state === "stopped" ? "已完成" : esc(s.state || "—")}</td></tr>`).join("")
+      : `<tr><td colspan="6">还没有录制。</td></tr>`;
+  } catch(e){}
+}
+
+async function poll(){
+  try { render(await api("/api/status")); }
+  catch(e){ $("stateText").textContent = "无法连接录制服务"; $("alerts").innerHTML = `<div class="alert err">无法连接录制服务。请确认运行服务的窗口没有关闭（重新运行启动脚本即可）。</div>`; }
+  setTimeout(poll, 1000);
+}
+
+$("btnRecord").onclick = async () => {
+  if (!last) return;
+  const rec = last.recording.state === "recording";
+  if (rec && !confirm("确定停止录制吗？当前片段会被保存。")) return;
+  busy = true; $("btnRecord").disabled = true;
+  try {
+    const s = await api(rec ? "/api/record/stop" : "/api/record/start", {});
+    toast(rec ? `已停止。文件保存在 ${s.path}` : `开始录制：${s.name}`);
+    refreshSessions();
+  } catch(e){ toast(`操作失败：${e.message}`); }
+  busy = false;
+};
+$("btnReconnect").onclick = async () => {
+  busy = true; toast("正在重新连接相机…");
+  try { await api("/api/cameras/reconnect", {}); $("cams").innerHTML = ""; toast("相机已重新连接"); }
+  catch(e){ toast(`重新连接失败：${e.message}`); }
+  busy = false;
+};
+$("btnFolder").onclick = async () => { try { const r = await api("/api/open-folder", {}); toast(`已打开：${r.path}`); } catch(e){ toast(`打开失败：${e.message}`); } };
+
+poll(); refreshSessions(); setInterval(refreshSessions, 10000);
+</script>
+</body>
+</html>
