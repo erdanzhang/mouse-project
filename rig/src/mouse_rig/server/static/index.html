@@ -84,6 +84,10 @@
   .foot{margin-top:28px;color:var(--faint);font-size:12.5px;font-family:var(--mono);line-height:1.8}
   .toast{position:fixed;right:20px;bottom:20px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:420px}
   .toast.show{opacity:1}
+  dialog{border:1px solid var(--line);border-radius:12px;padding:20px 22px;width:min(92vw,380px);color:var(--ink);background:var(--panel);box-shadow:0 12px 40px rgba(0,0,0,.18)}
+  dialog::backdrop{background:rgba(22,25,28,.38)}
+  dialog p{margin:0 0 18px;font-size:15px}
+  dialog .dlgbtns{display:flex;justify-content:flex-end;gap:10px}
   @media (max-width:1100px){.strip{grid-template-columns:repeat(4,minmax(0,1fr))}.strip>div:last-child{grid-column:span 2}}
   @media (max-width:560px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:1fr}}
 </style>
@@ -124,6 +128,13 @@
   <div class="foot" id="foot"></div>
 </div>
 <div class="toast" id="toast"></div>
+<!-- in-page dialog, not window.confirm(): some browsers suppress native dialogs (confirm() then returns false) -->
+<dialog id="stopDlg" aria-labelledby="stopDlgText">
+  <form method="dialog">
+    <p id="stopDlgText">确定停止录制吗？当前片段会被保存。</p>
+    <div class="dlgbtns"><button class="btn" value="no" autofocus>取消</button><button class="btn primary stop" value="yes">确定</button></div>
+  </form>
+</dialog>
 
 <script>
 const $ = (id) => document.getElementById(id);
@@ -266,10 +277,20 @@ async function poll(){
   setTimeout(poll, 1000);
 }
 
+function confirmStop(){
+  const dlg = $("stopDlg");
+  if (typeof dlg.showModal !== "function") return Promise.resolve(confirm($("stopDlgText").textContent));
+  return new Promise(resolve => {
+    dlg.returnValue = "";
+    dlg.addEventListener("close", () => resolve(dlg.returnValue === "yes"), {once: true});
+    dlg.showModal();
+  });
+}
+
 $("btnRecord").onclick = async () => {
   if (!last) return;
   const rec = last.recording.state === "recording";
-  if (rec && !confirm("确定停止录制吗？当前片段会被保存。")) return;
+  if (rec && !(await confirmStop())) return;
   busy = true; $("btnRecord").disabled = true;
   try {
     const minutes = parseFloat($("inMinutes").value) || 0;
