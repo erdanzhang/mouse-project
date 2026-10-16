@@ -18,7 +18,7 @@ recording:
   quality: balanced               # high（最清晰，文件最大）| balanced（推荐）| small（文件最小）
   x264_preset: veryfast           # 只对 libx264（CPU 编码）有效；CPU 跟不上时改成 superfast
   min_free_gb: 10                 # 磁盘剩余空间低于这个值（GB）时自动停止录制
-  max_minutes: 0                  # 单次录制的最长分钟数；0 = 不限制
+  max_minutes: 0                  # 网页“定时”一格的默认分钟数：到时间自动停止，正好切成完整片段；0 = 不定时
   queue_seconds: 3                # 编码器来不及时，每台相机最多缓存几秒的画面
 
 cameras:

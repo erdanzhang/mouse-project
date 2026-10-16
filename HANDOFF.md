@@ -10,9 +10,9 @@
 
 - **Goal:** multi-camera rig that records mice in a clear glass chamber, tracks each mouse with a stable ID, and auto-flags **nose/face scratching**; a motion "key-pixel" gate drops idle footage to keep storage/analysis cheap.
 - **Repo layout:** `rig/` = the real platform-neutral package (`mouse_rig`), `poc/` = the original proof-of-concept, `docs/` = brief PDFs (EN/ZH).
-- **Done:** **M0** (platform harness, `mouse-rig report`), **M1** (key-pixel gate, `mouse-rig gate`), and the **recorder service** (`mouse-rig serve`: Chinese web UI, one-click recording, 1-min H.264 clips, Hikrobot MVS backend, Arduino Line0 hardware sync with a shared trigger index, `mouse-rig check`). Tested on the Mac with synthetic cameras + a virtual Arduino (24 tests).
+- **Done:** **M0** (platform harness, `mouse-rig report`), **M1** (key-pixel gate, `mouse-rig gate`), and the **recorder service** (`mouse-rig serve`: Chinese web UI, one-click recording, 1-min H.264 clips, Hikrobot MVS backend, Arduino Line0 hardware sync with a shared trigger index, timed recordings that end on a clip boundary, `mouse-rig check`). 37 hardware-free tests. **Hardware-tested 2026-10-16** on the Windows lab PC (2× MV-CS016-10UC, Arduino UNO on COM5, MVS V5.0.2, NVENC): a 5-minute trigger-mode recording gave five 1-minute clips of exactly 3600/3600 frames, identical trigger indices on both cameras, 0 dropped / lost / filled.
 - **Installation guide (Chinese):** [`docs/installation-guide.html`](docs/installation-guide.html) — BOM, connection + wiring diagrams, drivers, first run, FAQ, hardware checklist. **Open this first on the hardware PC.**
-- **Next (needs hardware):** first real test on the Windows lab PC — MVS backend with real cameras, Arduino gate over USB serial, NVENC. Follow the guide's checklist (section 13).
+- **Next (needs hardware):** finish the guide's checklist (section 13) with the final rig — the Arduino-unplug test, a 1-hour run, the mono cameras under 940 nm IR, and 4 cameras on two USB3 controllers.
 - **Blocked on hardware:** M2–M5 need the cameras/rig; M6–M7 need live mice.
 
 ---
@@ -23,9 +23,9 @@
 |---|---|---|
 | **M0** | Repo + platform capability harness (`mouse-rig report`) | ✅ done |
 | **M1** | Key-pixel gate (`mouse-rig gate`) — any OS | ✅ done |
-| **Rec** | Recorder service: web UI, clips, MVS backend, Line0 sync, installers, guide | ✅ code done (synthetic); ☐ hardware test |
-| M2 | Camera first light + Python grab (MVS) | ☐ needs cameras — code ready in `cameras/mvs.py` |
-| M3 | Multi-camera capture + Arduino hardware sync | ☐ needs cameras — code ready (`recorder/sync.py`, `arduino.py`, sketch) |
+| **Rec** | Recorder service: web UI, clips, MVS backend, Line0 sync, installers, guide | ✅ hardware-tested 2026-10-16 (2 color cams, 5-min synced run); ☐ 1-hour run, 4 cams |
+| M2 | Camera first light + Python grab (MVS) | ✅ 2× MV-CS016-10UC through `cameras/mvs.py` (BayerRG8, 60 fps) |
+| M3 | Multi-camera capture + Arduino hardware sync | ✅ 2 cameras frame-locked by the Arduino gate; ☐ 4 cameras |
 | M4 | Stereo calibration + triangulation (fuse) | ☐ practice now, real on mounts |
 | M5 | Integrated capture dry-run | ☐ needs rig |
 | M6 | Behavior model bootstrap (pose + scratch classifier) | ☐ needs mice |
@@ -33,7 +33,7 @@
 
 **Hardware:** ✅ on hand → 2× Hikrobot **color** cameras with 2× **8 mm** lenses — color cams carry an IR-cut filter, so they're for **visible-light sessions only**; **Arduino UNO** + 6-pin IO cable (**MV-ACC-01-2101**); 2× USB3 cables. ☐ buying now → **2× MV-CS016-10UM mono** (1440×1080, global shutter, USB3, for 940 nm IR) + **2× `MVL-MF0824M-5MPE`** (8 mm, F2.4, 2/3", C-mount, front thread **M35.5×0.5**; same model as the color cams' lenses). **940 nm bandpass filter: optional — skip for now** (expensive; add only if room light leaks in). ☐ pending → **940 nm "无红暴" IR lamps, DC 12 V, always on** — 2 per station at 30–45° from vertical, with a diffuser, over a **matte floor** (dark for white mice, light for black mice); tripods with a boom + 1/4-inch screw; **unmarked glass beakers** (15 & 20 cm); one 6-pin IO cable per camera; a PCIe USB3 card for 4 cameras; **mice** — target **4** systems. Camera height (lens front → beaker floor, 8 mm lens): **≈37 cm** for the 15 cm beaker, **≈49 cm** for 20 cm.
 
-**Trigger wiring (sketch `rig/hardware/sync_trigger/sync_trigger.ino`):** each camera's IO cable → **yellow (pin 2, Line0+) → Arduino D9 / D10 / D11 / D12**, **green (pin 5, Line0−) → Arduino GND** (all greens joined). **Orange (pin 1) is camera power — never connect it.** Other wires unused, insulated. Verify colors with a multimeter. D9–D12 are one PORTB write, so all cameras fire together; 1 ms pulse; serial 115200 (`<n>` fps, `s` stop, `r` run, `?` status). The recorder sets the Arduino fps from the config and gates the trigger at camera open.
+**Trigger wiring (sketch `rig/hardware/sync_trigger/sync_trigger.ino`):** each camera's IO cable → **yellow (pin 2, Line0+) → 470 Ω → Arduino D9 / D10 / D11 / D12**, **green (pin 5, Line0−) → Arduino GND** (all greens joined). **Orange (pin 1) is camera power — never connect it.** Other wires unused, insulated. Verify colors with a multimeter. D9–D12 are one PORTB write, so all cameras fire together; 1 ms pulse; serial 115200 (`<n>` fps, `s` stop, `r` run, `?` status). The recorder sets the Arduino fps from the config and gates the trigger at camera open.
 
 **Compute:** capture + NVENC + training on a **Windows/Ubuntu PC with an RTX 5070** (single NVENC engine). **Mac** for cross-platform dev.
 
@@ -41,9 +41,10 @@
 
 ## TODO (near-term, actionable — do these next)
 
-- [ ] **First hardware test on the Windows lab PC** — follow `docs/installation-guide.html` (sections 6–8, checklist in 13): MVS install → `install_windows.bat` (`Hikrobot MVS SDK yes`) → demo → real cameras free-run → Arduino upload + wiring → `trigger: "line0"` → `mouse-rig check --decode` all `yes` → 1-hour run. Expect to debug `cameras/mvs.py` against real hardware (pixel formats, node names, frame-number semantics, timestamp units).
-- [ ] **Measure real data volume** (GB per camera per hour at `quality: balanced`) and replace the 1–4 GB/h estimate in the guide.
-- [ ] **Verify the trigger-index assumptions on hardware:** `nFrameNum` skips on transfer loss; the Arduino gate makes every camera's first frame the same pulse; `missed_trigger_corrections` stays 0.
+- [x] **First hardware test on the Windows lab PC** (2026-10-16) — install script, demo, free-run, Line0 trigger with the Arduino gate, 5-minute timed run → 5 × 3600-frame clips, all `yes`. Fixed on the way: CS-series cameras only have `TriggerSelector=FrameBurstStart`; `check` now accepts a 1–2 frame free-run difference; timed recordings end exactly on a clip boundary.
+- [ ] **Finish the hardware checklist:** Arduino-unplug test, 1-hour run (dropped / lost / filled stay 0, no sleep), 4 cameras on two USB3 controllers.
+- [ ] **Re-measure data volume** with the mono cameras under IR at low gain (color cams at 16 dB gain: ~90–155 MB/min/camera ≈ 5–9 GB/h depending on the scene, now in the guide).
+- [x] **Trigger-index assumptions hold on hardware:** `nFrameNum` gap-free, the gate gives both cameras the same first pulse, camera timestamps step 16.655 ms on both, `missed_trigger_corrections` 0.
 - [ ] **Port the POC scratch logic** from `poc/mouse_analyzer/` into `rig/src/mouse_rig/processing/` for M6 (blob + ByteTrack + Claude-vision confirmer).
 - [ ] **Practice M4 calibration** with two webcams + a printed ChArUco board to validate triangulation before real cameras.
 - [ ] **Finish ordering hardware:** 2× MV-CS016-10UM mono + 2× MVL-MF0824M-5MPE, 940 nm 12 V IR lamps (2 per station) + diffusers, tripods with booms, one 6-pin IO cable per camera, unmarked glass beakers (15 & 20 cm), a PCIe USB3 card. Filters optional (M35.5×0.5). Scale toward **4 systems**.
@@ -98,7 +99,7 @@ python3 -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\
 pip install -e ".[dev]"
 
 mouse-rig report        # NVENC/CUDA on the RTX 5070 PC; VideoToolbox/MPS on a Mac
-pytest -q               # 24 passed on any OS (synthetic cameras)
+pytest -q               # 37 passed on any OS (synthetic cameras)
 mouse-rig serve --demo  # recorder UI with 2 virtual cameras
 
 # M1 needs a video (sample not in repo — use any .mp4):
@@ -185,7 +186,7 @@ Harvesters+GenICam (capture), Hikvision MVS (driver/GenTL), OpenCV (gate/calibra
 - **Recorder settings** go in `rig/config/recorder.local.yaml` (git-ignored, created by the installer) so `git pull` never conflicts. Web-UI exposure/gain changes are not saved — copy them into that file.
 - **Close the MVS client and the Arduino Serial Monitor before starting the recorder** — each holds its device exclusively.
 - **Trigger mode needs the Arduino on the recording PC's USB** for the exact gate; without it, camera offsets come from arrival times (works if latency differences stay < half a frame period).
-- **Not yet run on real hardware:** `cameras/mvs.py`, the Arduino serial gate, NVENC, the Windows `.bat` scripts (reviewed, not executed).
+- **Hardware-tested (2026-10-16):** `cameras/mvs.py`, the Arduino serial gate, NVENC, `install_windows.bat` / `start_recorder_windows.bat`. Hikrobot CS-series cameras have no `FrameStart` trigger selector — the backend falls back to `FrameBurstStart` with a burst of 1 frame (same behavior).
 
 ---
 

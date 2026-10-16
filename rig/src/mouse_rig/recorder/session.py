@@ -62,11 +62,29 @@ def _dir_size(path: Path) -> int:
     return total
 
 
+def _limit_minutes(value) -> float:
+    try:
+        minutes = float(value or 0)
+    except (TypeError, ValueError):
+        raise ValueError(f"recording length must be a number of minutes, not {value!r}") from None
+    if not 0 <= minutes < float("inf"):           # also rejects NaN
+        raise ValueError(f"recording length must be 0 (no limit) or more minutes, not {value!r}")
+    return minutes
+
+
 class RecordingSession:
-    def __init__(self, cfg: dict, manager: CameraManager):
+    """One recording. ``minutes`` > 0 stops it by itself after exactly that long
+    (default: ``recording.max_minutes``; 0 = until stopped)."""
+
+    # a timed trigger-mode recording that gets no pulses still stops this long after its end
+    LIMIT_GRACE_S = 5.0
+
+    def __init__(self, cfg: dict, manager: CameraManager, minutes: float | None = None):
         self.cfg = cfg
         self.manager = manager
         self.rec = cfg["recording"]
+        self.limit_s = 60.0 * _limit_minutes(self.rec.get("max_minutes") if minutes is None else minutes)
+        self.limit_reached = False
         self.root = output_dir(cfg)
         self.writers: dict[str, CameraClipWriter] = {}
         self.sync: SyncPlan | None = None     # set when all cameras use the hardware trigger
@@ -103,9 +121,11 @@ class RecordingSession:
         clock = self.manager.clock
         if clock is not None:
             # start two pulses after the newest frame: no camera has that pulse yet
-            per_clip = max(1, round(float(self.rec["clip_seconds"]) * float(slots[0].settings.fps)))
+            fps = float(slots[0].settings.fps)
+            per_clip = max(1, round(float(self.rec["clip_seconds"]) * fps))
             newest = clock.newest
-            self.sync = SyncPlan(per_clip, start=None if newest is None else newest + 2)
+            self.sync = SyncPlan(per_clip, start=None if newest is None else newest + 2,
+                                 max_frames=round(self.limit_s * fps) if self.limit_s else None)
         for slot in slots:
             fps = float(slot.settings.fps)
             writer = CameraClipWriter(
@@ -114,7 +134,8 @@ class RecordingSession:
                 encoder=choice.name, quality=self.rec["quality"], container=self.rec["container"],
                 x264_preset=self.rec.get("x264_preset", "veryfast"),
                 queue_frames=int(fps * float(self.rec.get("queue_seconds", 3))),
-                log_dir=self.dir / "logs", sync=self.sync)
+                log_dir=self.dir / "logs", sync=self.sync,
+                end_time=self.t0 + self.limit_s if self.limit_s and self.sync is None else None)
             writer.start()
             self.writers[slot.cam_id] = writer
             slot.sink = writer.submit
@@ -149,17 +170,33 @@ class RecordingSession:
         self._write_json()
 
     # -- monitoring ------------------------------------------------------------
+    def _limit_done(self) -> bool:
+        """True once a timed recording has all its frames."""
+        if not self.limit_s:
+            return False
+        now = time.time()
+        if self.sync is not None:
+            clock, end = self.manager.clock, self.sync.window_end()
+            if clock is not None and clock.newest is not None and end is not None and clock.newest >= end:
+                return True                      # a camera already has the first pulse after the end
+            return now >= self.t0 + self.limit_s + self.LIMIT_GRACE_S
+        return now >= self.t0 + self.limit_s + 0.3   # frames up to end_time have reached the writers
+
     def _watch(self) -> None:
-        max_min = float(self.rec.get("max_minutes") or 0)
         min_free = float(self.rec["min_free_gb"])
-        while not self._halt.wait(5.0):
+        next_check = time.time() + 5.0
+        while not self._halt.wait(0.2):
+            if self._limit_done():
+                self.limit_reached = True
+                threading.Thread(target=self.stop, args=(f"time limit reached ({self.limit_s / 60:g} min)",),
+                                 daemon=True).start()
+                return
+            if time.time() < next_check:
+                continue
+            next_check = time.time() + 5.0
             self.size_bytes = _dir_size(self.dir)
             if shutil.disk_usage(self.root).free / 1e9 < min_free:
                 threading.Thread(target=self.stop, args=(f"disk almost full (< {min_free} GB free)",),
-                                 daemon=True).start()
-                return
-            if max_min and time.time() - self.t0 >= max_min * 60:
-                threading.Thread(target=self.stop, args=(f"max_minutes={max_min:g} reached",),
                                  daemon=True).start()
                 return
             self._write_json()
@@ -181,6 +218,8 @@ class RecordingSession:
             "name": self.dir.name if self.dir else "",
             "path": str(self.dir) if self.dir else "",
             "elapsed_s": round(self.elapsed(), 1),
+            "limit_s": self.limit_s,
+            "limit_reached": self.limit_reached,
             "encoder": self.encoder,
             "size_mb": round(self.size_bytes / 1e6, 1),
             "stop_reason": self.stop_reason,
@@ -226,6 +265,7 @@ class RecordingSession:
             "stopped": datetime.fromtimestamp(self.t_end).isoformat(timespec="seconds") if self.t_end else None,
             "stop_reason": self.stop_reason,
             "duration_s": round(self.elapsed(), 1),
+            "timed_minutes": self.limit_s / 60 if self.limit_s else None,
             "clip_seconds": self.rec["clip_seconds"],
             "container": self.rec["container"],
             "codec": self.rec["codec"],

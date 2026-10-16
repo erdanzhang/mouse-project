@@ -36,6 +36,9 @@
   .btn:disabled{opacity:.45;cursor:not-allowed}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600;padding:10px 22px;font-size:16px}
   .btn.primary.stop{background:var(--rec);border-color:var(--rec)}
+  .dur{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+  .dur input{width:72px;padding:8px;border:1px solid var(--line2);border-radius:8px;font:14px var(--mono);color:var(--ink);background:var(--panel)}
+  .dur input:disabled{opacity:.55}
 
   .strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:16px}
   .strip div{background:var(--panel);padding:10px 14px;min-width:0}
@@ -45,6 +48,7 @@
   .alerts{margin-top:14px;display:grid;gap:8px}
   .alert{border-left:3px solid var(--warn);background:var(--warn-wash);color:#5c3c05;padding:9px 14px;border-radius:0 8px 8px 0;font-size:14px}
   .alert.err{border-left-color:var(--rec);background:var(--rec-wash);color:#7a1d16}
+  .alert.ok{border-left-color:var(--ok);background:var(--ok-wash);color:#1d4d31}
 
   h2{font-size:15px;margin:26px 0 10px;color:var(--muted);font-weight:600}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
@@ -92,6 +96,7 @@
     <span class="spacer"></span>
     <button class="btn" id="btnFolder" title="在文件管理器中打开录像文件夹">打开录像文件夹</button>
     <button class="btn" id="btnReconnect" title="关闭并重新打开所有相机（录制时不可用）">重新连接相机</button>
+    <label class="dur" title="到时间自动停止，正好切成完整的片段（例如 5 分钟 = 5 个 1 分钟片段）。空或 0 = 手动停止。">定时<input type="number" id="inMinutes" min="0" step="1" placeholder="不限" aria-label="录制分钟数">分钟</label>
     <button class="btn primary" id="btnRecord" disabled>开始录制</button>
   </header>
 
@@ -123,7 +128,7 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const STATE_TEXT = {ok:"正常", waiting:"等待画面", error:"错误", disabled:"已禁用", closed:"未打开"};
-let last = null, busy = false;
+let last = null, busy = false, minutesInit = false;
 
 function hms(s){ s = Math.max(0, Math.floor(s||0)); const h=String(Math.floor(s/3600)).padStart(2,"0"), m=String(Math.floor(s%3600/60)).padStart(2,"0"), x=String(s%60).padStart(2,"0"); return `${h}:${m}:${x}`; }
 function esc(t){ return String(t ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -221,7 +226,9 @@ function render(st){
   const anyOk = st.cameras.some(c => c.state === "ok" || c.state === "waiting");
   btn.disabled = busy || stopping || (!rec && (!anyOk || !a.encoder));
   $("btnReconnect").disabled = busy || rec || stopping;
-  $("elapsed").textContent = hms(r.elapsed_s);
+  if (!minutesInit){ minutesInit = true; if (a.max_minutes > 0) $("inMinutes").value = a.max_minutes; }
+  $("inMinutes").disabled = rec || stopping;
+  $("elapsed").textContent = hms(r.elapsed_s) + (r.limit_s > 0 && (rec || stopping) ? ` / ${hms(r.limit_s)}` : "");
   const w0 = Object.values(r.writers || {})[0];
   $("clip").textContent = rec && w0 ? w0.current_clip.replace("clip-","") : (r.name || "—");
   $("size").textContent = r.size_mb != null ? `${r.size_mb} MB` : "—";
@@ -237,9 +244,10 @@ function render(st){
   if (sy.mode === "line0" && !ard) alerts.push(["warn", "触发模式：没有通过 USB 找到 Arduino（" + (sy.note || "") + "）。录制可以进行，但相机之间的帧对齐改用到达时间估计。建议把 Arduino 的 USB 线插到这台电脑，并关闭 Arduino IDE 的串口监视器，然后点击“重新连接相机”。"]);
   if (a.encoder_error) alerts.push(["err", "视频编码器不可用：" + a.encoder_error]);
   for (const e of a.discovery_errors || []) alerts.push(["err", "查找相机时出错：" + e]);
-  if (r.stop_reason && r.state === "stopped" && r.stop_reason !== "stopped by user") alerts.push(["warn", "录制已自动停止：" + r.stop_reason]);
+  if (r.state === "stopped" && r.limit_reached) alerts.push(["ok", `定时录制完成（${r.limit_s / 60} 分钟），已自动停止并保存。`]);
+  else if (r.stop_reason && r.state === "stopped" && r.stop_reason !== "stopped by user") alerts.push(["warn", "录制已自动停止：" + r.stop_reason]);
   if (a.free_gb < a.min_free_gb * 2) alerts.push(["warn", `磁盘剩余空间不多（${a.free_gb} GB）。低于 ${a.min_free_gb} GB 时录制会自动停止。`]);
-  $("alerts").innerHTML = alerts.map(([k,m]) => `<div class="alert ${k === "err" ? "err" : ""}">${esc(m)}</div>`).join("");
+  $("alerts").innerHTML = alerts.map(([k,m]) => `<div class="alert ${k === "warn" ? "" : k}">${esc(m)}</div>`).join("");
   renderCams(st);
   $("foot").innerHTML = `录像文件夹：${esc(a.output_dir)}<br>配置文件：${esc(a.config_path || "内置默认值")}<br>ffmpeg：${esc(a.ffmpeg || "未找到")} · Python ${esc(a.python)} · 相机后端：${esc(a.backends.join(", "))}`;
 }
@@ -264,8 +272,9 @@ $("btnRecord").onclick = async () => {
   if (rec && !confirm("确定停止录制吗？当前片段会被保存。")) return;
   busy = true; $("btnRecord").disabled = true;
   try {
-    const s = await api(rec ? "/api/record/stop" : "/api/record/start", {});
-    toast(rec ? `已停止。文件保存在 ${s.path}` : `开始录制：${s.name}`);
+    const minutes = parseFloat($("inMinutes").value) || 0;
+    const s = await api(rec ? "/api/record/stop" : "/api/record/start", rec ? {} : {minutes});
+    toast(rec ? `已停止。文件保存在 ${s.path}` : `开始录制：${s.name}${s.limit_s > 0 ? `（定时 ${s.limit_s / 60} 分钟）` : ""}`);
     refreshSessions();
   } catch(e){ toast(`操作失败：${e.message}`); }
   busy = false;

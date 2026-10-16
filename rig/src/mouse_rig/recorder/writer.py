@@ -14,6 +14,10 @@ Two ways to cut clips:
 
 In both modes, clip k goes into the folder ``clip-<t0 + k*clip_seconds>`` for every camera.
 
+A timed recording ends exactly on a clip boundary: free-run drops frames from
+``end_time`` on, trigger mode drops indices from ``start + max_frames`` on (see
+``SyncPlan.window_end``), so a 5-minute recording is exactly five 1-minute clips.
+
 Files written for clip k of camera N::
 
     <session>/clip-2026-10-16-143105/cam-N.mp4          the video
@@ -45,7 +49,8 @@ def clip_name(t: float) -> str:
 class CameraClipWriter:
     def __init__(self, *, cam_index: int, session_dir: Path, t0: float, clip_seconds: float,
                  fps: float, ffmpeg: str, encoder: str, quality: str, container: str,
-                 x264_preset: str, queue_frames: int, log_dir: Path, sync: SyncPlan | None = None):
+                 x264_preset: str, queue_frames: int, log_dir: Path, sync: SyncPlan | None = None,
+                 end_time: float | None = None):
         self.cam_index = cam_index
         self.session_dir = session_dir
         self.t0 = t0
@@ -58,6 +63,7 @@ class CameraClipWriter:
         self.x264_preset = x264_preset
         self.log_path = log_dir / f"ffmpeg-cam-{cam_index}.log"
         self.sync = sync
+        self.end_time = end_time                         # timed free-run recording: drop frames from here on
         self.max_fill = max(1, int(round(self.fps)))     # fill gaps up to 1 s; a longer gap is a trigger stop
         self._q: queue.Queue = queue.Queue(maxsize=max(10, int(queue_frames)))
         self._stop = threading.Event()
@@ -124,6 +130,9 @@ class CameraClipWriter:
 
     def _handle(self, frame: Frame) -> None:
         if self.sync is None:
+            if self.end_time is not None and frame.host_time >= self.end_time:
+                self.frames_skipped += 1
+                return
             k = max(0, int((frame.host_time - self.t0) // self.clip_seconds))
             self._enter_clip(k, frame.image)
             self._write(frame.image, frame, "", 0)
@@ -133,7 +142,7 @@ class CameraClipWriter:
             self.frames_skipped += 1
             return
         start = self.sync.resolve_start(idx)
-        end = self.sync.end
+        end = self.sync.window_end()
         if idx < start or (end is not None and idx >= end) or (
                 self._next_index is not None and idx < self._next_index):
             self.frames_skipped += 1
@@ -161,11 +170,12 @@ class CameraClipWriter:
 
     def _fill_to_end(self) -> None:
         """At stop, give every camera the same last trigger index."""
-        if self.sync is None or self.sync.end is None or self._next_index is None:
+        end = self.sync.window_end() if self.sync is not None else None
+        if end is None or self._next_index is None:
             return
-        if self._next_index < self.sync.end:
-            self._fill(self._next_index, self.sync.end, self._last_image)
-            self._next_index = self.sync.end
+        if self._next_index < end:
+            self._fill(self._next_index, end, self._last_image)
+            self._next_index = end
 
     def _enter_clip(self, k: int, image) -> None:
         if k != self._clip_k:

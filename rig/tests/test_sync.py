@@ -120,3 +120,38 @@ def test_trigger_recording_session_json(tmp_path):
 def test_parse_status():
     assert _parse_status("fps=60 running=yes pulses=12") == {"fps": 60, "running": True, "pulses": 12}
     assert _parse_status("mouse-project trigger ready") is None
+
+
+def test_clock_period_is_unbiased_by_late_frames():
+    # USB delivers frames a little later each time, then catches up (sawtooth delay):
+    # intervals are mostly P + 1 ms with one short one. The median would say P + 1 ms.
+    clock = TriggerClock(60)
+    clock.arm_gate()
+    period = 1 / 60
+    for p in range(200):
+        t = 1000.0 + p * period + (p % 5) * 0.001
+        clock.index("cam-1", p, t)
+    assert abs(clock.period - period) < 1e-4                         # the median is 1 ms off
+
+
+def test_timed_trigger_recording_is_whole_clips(tmp_path):
+    cfg = _cfg(tmp_path, count=2)
+    mgr = CameraManager(cfg)
+    mgr.open_all()
+    try:
+        deadline = time.time() + 5
+        while time.time() < deadline and not all(s["state"] == "ok" for s in mgr.status()):
+            time.sleep(0.1)
+        session = RecordingSession(cfg, mgr, minutes=2 * CLIP_S / 60)
+        path = session.start()
+        deadline = time.time() + 15
+        while session.state != "stopped" and time.time() < deadline:
+            time.sleep(0.1)
+        assert session.state == "stopped" and session.limit_reached
+    finally:
+        mgr.close_all()
+    clips = sorted(p for p in path.iterdir() if p.is_dir() and p.name.startswith("clip-"))
+    assert len(clips) == 2                                           # no short extra clip
+    for clip in clips:
+        indices = [[r["trigger_index"] for r in _rows(clip / f"cam-{c}.frames.csv")] for c in (1, 2)]
+        assert indices[0] == indices[1] and len(indices[0]) == CLIP_S * FPS

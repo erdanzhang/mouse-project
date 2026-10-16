@@ -19,7 +19,7 @@ are feature-detected at runtime — see [`docs/PLATFORM.md`](docs/PLATFORM.md).
 |-----------|------|-------|
 | **M0** | Repo + platform capability harness (`mouse-rig report`) | ✅ in this repo |
 | **M1** | Key-pixel gate (`mouse-rig gate`) — runs on any OS | ✅ in this repo |
-| **Recorder** | Web UI + one-click recording, 1-min clips, Hikrobot MVS backend, Arduino Line0 sync (`mouse-rig serve`) | ✅ tested with synthetic cameras; hardware test next |
+| **Recorder** | Web UI + one-click recording, 1-min clips, Hikrobot MVS backend, Arduino Line0 sync (`mouse-rig serve`) | ✅ hardware-tested 2026-10-16 (2 Hikrobot cams + Arduino sync) |
 | M2–M5 | Camera bring-up, sync, calibration, dry-run | needs the rig |
 | M6–M7 | Behavior model + active-learning loop | needs mice |
 
@@ -50,7 +50,7 @@ mouse-rig serve --demo        # 2 virtual cameras, no hardware
 mouse-rig serve               # real cameras (Hikrobot MVS, Windows/Linux)
 mouse-rig cameras             # list cameras + serial numbers
 mouse-rig check [SESSION]     # frames per camera per clip (add --decode to count video frames)
-mouse-rig record --seconds 30 # headless recording
+mouse-rig record --seconds 30 # headless recording (stops after exactly 30 s)
 ```
 
 Clips: `<output_dir>/<session>/clip-<time>/cam-N.mp4` + `cam-N.frames.csv`, cut every

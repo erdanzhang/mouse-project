@@ -61,9 +61,16 @@ class TriggerClock:
 
     @property
     def period(self) -> float:
-        """Measured trigger period in seconds (median frame interval), or 1/fps at first."""
+        """Measured trigger period in seconds (mean frame interval), or 1/fps at first.
+
+        Arrival intervals are skewed (USB delivers some frames late, the next ones
+        catch up), so their median is biased (16.8 ms for a 16.66 ms trigger on the
+        lab PC). The mean is not, once stalls and catch-up bursts are left out.
+        """
         if len(self._intervals) >= 30:
-            return statistics.median(self._intervals)
+            median = statistics.median(self._intervals)
+            kept = [x for x in self._intervals if 0.5 * median < x < 1.5 * median]
+            return statistics.fmean(kept) if kept else median
         return self.nominal_period
 
     def arm_gate(self) -> None:
@@ -144,6 +151,7 @@ class SyncPlan:
     frames_per_clip: int
     start: int | None = None        # first trigger index in the recording
     end: int | None = None          # first trigger index after the recording (set at stop)
+    max_frames: int | None = None   # timed recording: number of trigger indices to record
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def resolve_start(self, index: int) -> int:
@@ -153,6 +161,14 @@ class SyncPlan:
                 self.start = index
             return self.start
 
+    def window_end(self) -> int | None:
+        """First trigger index after the recording: from stop, or start + max_frames if timed."""
+        ends = [self.end]
+        if self.max_frames and self.start is not None:
+            ends.append(self.start + self.max_frames)
+        ends = [e for e in ends if e is not None]
+        return min(ends) if ends else None
+
     def as_dict(self) -> dict:
         return {"frames_per_clip": self.frames_per_clip, "first_trigger_index": self.start,
-                "end_trigger_index": self.end}
+                "end_trigger_index": self.window_end(), "timed_frames": self.max_frames}
