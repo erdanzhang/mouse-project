@@ -15,7 +15,7 @@ recording:
   container: mp4                  # mp4（分段式 MP4，程序意外退出也能播放）| mkv
   codec: h264                     # h264（兼容性最好）| h265（文件更小，旧软件可能打不开）
   encoder: auto                   # auto = 自动选择（NVIDIA 显卡用 h264_nvenc，Mac 用 h264_videotoolbox，否则 libx264）
-  quality: balanced               # high（最清晰，文件最大）| balanced（推荐）| small（文件最小）
+  quality: balanced               # balanced（推荐，和 high 看不出区别）| high（文件约大 80%）| small（文件约小 2/3，细节略软）
   x264_preset: veryfast           # 只对 libx264（CPU 编码）有效；CPU 跟不上时改成 superfast
   min_free_gb: 10                 # 磁盘剩余空间低于这个值（GB）时自动停止录制
   max_minutes: 0                  # 网页“定时”一格的默认分钟数：到时间自动停止，正好切成完整片段；0 = 不定时
