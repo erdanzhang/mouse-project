@@ -43,7 +43,8 @@
 
 - [x] **First hardware test on the Windows lab PC** (2026-10-16) — install script, demo, free-run, Line0 trigger with the Arduino gate, 5-minute timed run → 5 × 3600-frame clips, all `yes`. Fixed on the way: CS-series cameras only have `TriggerSelector=FrameBurstStart`; `check` now accepts a 1–2 frame free-run difference; timed recordings end exactly on a clip boundary.
 - [ ] **Finish the hardware checklist:** Arduino-unplug test, 1-hour run (dropped / lost / filled stay 0, no sleep), 4 cameras on two USB3 controllers.
-- [ ] **Re-measure data volume** with the mono cameras under IR at low gain (color cams at 16 dB gain: ~90–155 MB/min/camera ≈ 5–9 GB/h depending on the scene, now in the guide).
+- [ ] **Re-measure data volume** with the mono cameras under IR at low gain. Color cams at 16 dB gain with the new `balanced` (h264_nvenc cq 24, 2026-10-16): ~30–60 MB/min/camera ≈ 2–3.5 GB/h. Measured against a lossless capture: cq 22 → 24 saves 40–50 % for −0.3 VMAF; most bits are sensor noise; HEVC/AV1 were not smaller at equal quality.
+- [ ] **Check `quality: small` (cq 26, ~1/3 the size) on real mouse footage** — fine paw/whisker detail during fast scratching — before using it for long recordings.
 - [x] **Trigger-index assumptions hold on hardware:** `nFrameNum` gap-free, the gate gives both cameras the same first pulse, camera timestamps step 16.655 ms on both, `missed_trigger_corrections` 0.
 - [ ] **Port the POC scratch logic** from `poc/mouse_analyzer/` into `rig/src/mouse_rig/processing/` for M6 (blob + ByteTrack + Claude-vision confirmer).
 - [ ] **Practice M4 calibration** with two webcams + a printed ChArUco board to validate triangulation before real cameras.

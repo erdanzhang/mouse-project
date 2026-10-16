@@ -23,9 +23,12 @@ import numpy as np
 _NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 # quality presets: high / balanced / small
+# h264_nvenc was measured on the lab cameras against a lossless capture (2026-10-16): most
+# of the bits at cq 22 encode sensor noise; cq 24 is 40-50 % smaller for -0.3 VMAF (not
+# visible), cq 26 is ~80 % smaller for -1 VMAF. HEVC/AV1 were not smaller at equal quality.
 _QUALITY = {
     "libx264": ("-crf", (18, 21, 25)),
-    "h264_nvenc": ("-cq", (19, 22, 26)),
+    "h264_nvenc": ("-cq", (22, 24, 26)),
     "h264_qsv": ("-global_quality", (20, 23, 27)),
     "h264_videotoolbox": ("-q:v", (70, 66, 60)),
     "libx265": ("-crf", (20, 23, 27)),
